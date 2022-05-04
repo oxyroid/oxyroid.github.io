@@ -42,7 +42,7 @@
   ```kotlin
   // data.api.TestApi
   interface TestApi {
-      ...
+      // ...
       companion object {
           val Default = Retrofit.Builder()
           	.baseUrl(Contracts.BASE_URL)
@@ -62,7 +62,7 @@
       private lateinit var button: Button
       private lateinit var textView: TextView
       override fun onCreate(savedInstanceState: Bundle?) {
-          ...
+          // ...
           button = findViewById<Button>(R.id.button)
           textView = findViewById<TextView>(R.id.textView)
           button.setOnClickListener {
@@ -150,9 +150,9 @@
   ```kotlin
   // ui.TestActivity
   class TestActivity: AppCompatActivity(){
-      ...
+      // ...
       override fun onCreate(savedInstanceState: Bundle?) {
-          ...
+          // ...
           lifecycleScope.launch(Dispatcher.IO) {
               val user = try {
                   userApi.getRandomUser().toUser()
