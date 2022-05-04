@@ -205,7 +205,7 @@
   ```kotlin
   // data.dto.DogDTO
   data class DogDTO (
-  	val name: String,
+      val name: String,
       val age: Int,
       val sex: String
   )
@@ -285,29 +285,65 @@
 
 
 
-### 通过 Multipart 上传多个文件
+### 上传一个文件到云端
 
-- 现有一个API接口 `localhost:8080/main.php` ，定义 **FileUploadService** 接口
+- 现有一个API接口 `localhost:8080/upload` ，定义 **FileUploadService** 接口
+
+    ```kotlin
+    interface FileUploadService {
+        @Multipart
+        @POST("upload")
+        suspend fun postFile(
+            @Part("file\"; filename=\"photo.jpg\" ") RequestBody file
+        ): Call<String>
+    
+        companion object {
+            val Default = Retrofit.Builder()
+                .baseUrl(Contracts.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create<FileUploadService>()
+        }
+    }
+    ```
+
+- 调用这个接口
+
+    ```kotlin
+    service.postFile(file).enqueue(object : Callback<String> {
+        override fun onResponse(
+            call: Call<String>,
+            response: Response<String>
+        ) {
+            // 更新成功信息到UI
+        }
+    
+        override fun onFailure(call: Call<String>, t: Throwable) {
+            Log.e(TAG, "postFile", t)
+            // 更新错误信息到UI
+        }
+    })
+    ```
+
+    
+
+### 上传多个文件到云端
+
+- 现有一个API接口 `localhost:8080/upload/files` ，定义 **FileUploadService** 接口
 
   ```kotlin
   interface FileUploadService {
+      // ...
       @Multipart
-      @POST("main.php")
-      suspend fun postFile(
+      @POST("upload/files")
+      suspend fun postFiles(
           @PartMap Map<String, RequestBody> files,
           @Part("json") String description
       ): Call<String>
-      
-      companion object {
-          val Default = Retrofit.Builder()
-          	.baseUrl(Contracts.BASE_URL)
-              .addConverterFactory(GsonConverterFactory.create())
-          	.build()
-          	.create<FileUploadService>()
-      }
+      // ...
   }
   ```
-
+  
 - 构建一个 `String` 映射到 `RequestBody` 的 `HashMap` 用于存放多个文件：
 
   ```kotlin
@@ -317,52 +353,75 @@
 - 将每个 `Uri` 分别构建为 `RequestBody`，然后同文件名映射到 **files** 中：
 
   ```kotlin
-  uris.map(::File).forEach { file ->
-      val requestBody = file.asRequestBody("multipart/form-data".toMediaType())
-  	val fileName = file.name
+  uris.map(::File).forEach {
+      val requestBody = it.asRequestBody("multipart/form-data".toMediaType())
+      val fileName = it.name
       files.put(fileName, requestBody)
   }
   ```
 
+  
+
 - 随后调用接口：
 
   ```kotlin
-  service.postFile(files, "string request")
-  	.enqueue(object : Callback<String> {
-      	override fun onResponse(
-          	call: Call<String>,
-              response: Response<String>
-          ) {
-              // 更新成功信息到UI
-          }
-          override fun onFailure(call: Call<String>, t: Throwable) {
-              Log.e(TAG, "postFile", t)
-              // 更新错误信息到UI
-          }
-      })
+  service.postFiles(files, "string request").enqueue(object : Callback<String> {
+  	override fun onResponse(
+      	call: Call<String>,
+          response: Response<String>
+      ) {
+          // 更新成功信息到UI
+      }
+  
+      override fun onFailure(call: Call<String>, t: Throwable) {
+          Log.e(TAG, "postFile", t)
+          // 更新错误信息到UI
+      }
+  })
   ```
 
   
 
 ### 从云端下载文件
 
-- 现有一个API接口 `localhost:8080/test/download/{fileName}` ，根据fileName的值返回对应文件，定义 **FileDownloadService** 接口
+- 现有一个API接口 `localhost:8080/test/download/{fileName}` ，根据 **fileName** 的值返回对应文件，定义 **FileDownloadService** 接口
 
   ```kotlin
   interface FileDownloadService {
       @GET("download/{filename}")
-      suspend fun downloadByFileNameFromServer(
+      suspend fun downloadByFileName(
           @Path("fileName") fileName: String
       ): Call<ResponseBody>
-      
+  
       companion object {
           val Default = Retrofit.Builder()
-          	.baseUrl(Contracts.BASE_URL)
+              .baseUrl(Contracts.BASE_URL)
               .addConverterFactory(GsonConverterFactory.create())
-          	.build()
-          	.create<FileDownloadService>()
+              .build()
+              .create<FileDownloadService>()
       }
   }
   ```
 
+- 调用这个接口：
+
+  ```kotlin
+	service.downloadByFileName("1.png").enqueue(object : Callback<ResponseBody> {
+		override fun onResponse(
+			call: Call<ResponseBody>,
+			response: Response<ResponseBody>
+		) {
+			if (response.isSuccessful()) {
+				val body = response.body()
+	            // 用你的方法将body写入磁盘 
+			}
+		}
+		
+		override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+			Log.e(TAG, "downloadByFileName", t)
+			// 更新错误信息到UI
+		}
+	})
+  ```
+  
   
