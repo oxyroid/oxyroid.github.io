@@ -247,14 +247,17 @@
   	"X-RapidAPI-Key: ${Contracts.X_RapidAPI_Key}"
   )
   @GET("search/{name}")
-  suspend fun searchCard(): List<Card>
+  suspend fun searchCards(@Path("name") name: String): List<Card>
   ```
 
 - 使用 `@Header` 注解动态添加请求头信息
 
   ```kotlin
   @GET("search/{name}")
-  suspend fun searchCard(@Header("key") key: String): List<Card>
+  suspend fun searchCards(
+      @Header("key") key: String,
+      @Path("name") name: String
+  ): List<Card>
   ```
 
 - 使用 `OKHttpClient` 设置全局请求头信息
@@ -294,7 +297,7 @@
         @Multipart
         @POST("upload")
         suspend fun postFile(
-            @Part("file\"; filename=\"photo.jpg\" ") RequestBody file
+            @Part("file\"; filename=\"photo.jpg\" ") file: RequestBody
         ): Call<String>
     
         companion object {
@@ -310,7 +313,8 @@
 - 调用这个接口
 
     ```kotlin
-    service.postFile(file).enqueue(object : Callback<String> {
+    val requestBody = RequestBody.create(MediaType.parse("image/jpeg"), photoFile)
+    service.postFile(requestBody).enqueue(object : Callback<String> {
         override fun onResponse(
             call: Call<String>,
             response: Response<String>
@@ -324,7 +328,7 @@
         }
     })
     ```
-
+    
     
 
 ### 上传多个文件到云端
@@ -344,7 +348,7 @@
   }
   ```
   
-- 构建一个 `String` 映射到 `RequestBody` 的 `HashMap` 用于存放多个文件：
+- 构建一个 `String` 映射到 `RequestBody` 的 `MutableMap` 用于存放多个文件：
 
   ```kotlin
   val files = mutableMapOf<String, RequestBody>()
