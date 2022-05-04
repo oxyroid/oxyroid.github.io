@@ -1,16 +1,14 @@
-# Android Development Note
-
 ## Retrofit
 
-‎Retrofit‎‎ 是将 API 接口转换为可调用对象的工具。‎
+### 概览
 
-### 依赖
+- ‎Retrofit‎‎ 是将 API 接口转换为可调用对象的工具。‎
 
-[ retrofit2 : retrofit ](https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit)
+- 本章节用到的全部依赖如下
+  - [ retrofit2 : retrofit ](https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit)
+  - [ retrofit2 : converter-gson](https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson)
 
-[ retrofit2 : converter-gson](https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson)
-
-### 使用 Retrofit2 发送简单的 HTTP 请求
+### 使用 Retrofit 发送简单的 HTTP 请求
 
 * 现有一个后端接口 `localhost:8080/test/currentTime`，请求后会返回当前时间（毫秒时，Long型）。
 
@@ -87,13 +85,13 @@
   }
   ```
 
-### 处理 Retrofit2 接口返回的 JSON 格式的请求结果
+### 处理 Retrofit 接口返回的 JSON 格式的请求结果
 
-- 现有一个后端接口`localhost:8080/test/user/random`，请求后会已JSON格式返回随机用户简略信息，比如：
+- 现有一个后端接口 `localhost:8080/test/user/random` ，请求后会已JSON格式返回随机用户简略信息，比如：
 
   ```json
   {
-      "userId" : "40019",
+      "userId": "40019",
       "name": "李亮",
       "lastOnlineAt": 1651620000000
   }
@@ -175,7 +173,63 @@
   }
   ```
 
-  
+
+### 使用 @Path 和 @Query 传入参数
+
+- 现有一个API接口 `localhost:8080/test/dog/{count}`，`count` 传入一个整数，后端会以GSON数组的格式随机返回狗狗的简略信息，例如：
+
+  ```json
+  // localhost:8080/test/dog/2
+  [
+      {
+          "name": "Kitty",
+          "age": 2,
+          "sex": "female"
+      },
+      {
+          "name": "Lucio",
+          "age": 5,
+          "sex": "male"
+      }
+  ]
+  ```
+
+- 定义数据类 `DogDTO`
+
+  ```kotlin
+  // data.dto.DogDTO
+  data class DogDTO (
+  	val name: String,
+      val age: Int,
+      val sex: String
+  )
+  ```
+
+- 定义接口 `DogApi`，通过 `@Path` 注解实现动态请求：
+
+  ```kotlin
+  // data.api.DogApi
+  interface DogApi {
+      @GET("dog/{count}")
+      suspend fun getDogs(@Path("count") count: Int = 1): List<DogDTO>
+  }
+  ```
+
+- 如果API接口需要传入的参数包含**键值对**格式，如 `localhost:8080/test/dog/{count}?age={age}&sex={sex}`，那么就需要用到`@Query`注解：
+
+  ```kotlin
+  // data.api.DogApi
+  interface DogApi {
+      @GET("dog/{count}")
+      suspend fun getDogs(
+          @Path("count") count: Int = 1,
+          @Query("age") age: Int,
+          @Query("sex") sex: String
+      ): List<DogDTO>
+  }
+  ```
+
+   
 
 
 
