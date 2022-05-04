@@ -7,8 +7,11 @@
 - 本章节用到的全部依赖如下
   - [ retrofit2 : retrofit ](https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit)
   - [ retrofit2 : converter-gson](https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson)
+  - [ gson : gson](https://mvnrepository.com/artifact/com.google.code.gson/gson)
 
-### 使用 Retrofit 发送简单的 HTTP 请求
+
+
+### 发送简单的 GET 请求
 
 * 现有一个后端接口 `localhost:8080/test/currentTime`，请求后会返回当前时间（毫秒时，Long型）。
 
@@ -56,7 +59,6 @@
 * 现在我们在来测试这个接口：
 
   ```kotlin
-  // ui.TestActivity
   class TestActivity : AppCompatActivity() {
       private val testApi = TestApi.Default
       private lateinit var button: Button
@@ -67,27 +69,29 @@
           textView = findViewById<TextView>(R.id.textView)
           button.setOnClickListener {
               lifecycleScope.launch(Dispatcher.IO) {
-              	val call = testApi.currentTime()
-              	call.enqueue(object : Callback<Long> {
-                  	override fun onResponse(
-                      	call: Call<Long>,
-                      	response: Response<Long>
-                  	) {
-                      	textView.text = "${response.body()}ms"
-                  	}
-                  	override fun onFailure(call: Call<Long>, t: Throwable) {
-                      	Log.e(TAG, "onCreate", t)
-                  	}
-              	})
-          	}
+                  val call = testApi.currentTime()
+                  call.enqueue(object : Callback<Long> {
+                      override fun onResponse(
+                          call: Call<Long>,
+                          response: Response<Long>
+                      ) {
+                          textView.text = "${response.body()}ms"
+                      }
+                      override fun onFailure(call: Call<Long>, t: Throwable) {
+                          Log.e(TAG, "onCreate", t)
+                      }
+                  })
+              }
           }
       }
   }
   ```
 
-### 处理 Retrofit 接口返回的 JSON 格式的请求结果
 
-- 现有一个后端接口 `localhost:8080/test/user/random` ，请求后会已JSON格式返回随机用户简略信息，比如：
+
+### 处理 API 接口返回的 JSON 数据
+
+- 现有一个后端接口 `localhost:8080/test/user/random` ，请求后会以JSON格式返回随机用户简略信息，比如：
 
   ```json
   {
@@ -101,10 +105,10 @@
 
   ```kotlin
   // data.dto.UserDTO
-  data class UserDTO (
-  	@SerializedName("userId") val id : Int,
-      val name : String,
-      val lastOnlineAt : Long
+  data class UserDTO(
+      @SerializedName("userId") val id: Int,
+      val name: String,
+      val lastOnlineAt: Long
   )
   ```
 
@@ -117,13 +121,14 @@
   interface UserApi {
       @GET("user/random")
       suspend fun getRandomUser(): User
+  
       companion object {
           val Default = Retrofit.Builder()
-          	.baseUrl(Contracts.BASE_URL)
-          	// 使用Gson转换器
+              .baseUrl(Contracts.BASE_URL)
+              // 使用Gson转换器
               .addConverterFactory(GsonConverterFactory.create())
-          	.build()
-          	.create(UserApi::class.java)
+              .build()
+              .create(UserApi::class.java)
       }
   }
   ```
@@ -132,8 +137,8 @@
 
   ```kotlin
   // domain.entity.User
-  data class User (
-  	val id: Int,
+  data class User(
+      val id: Int,
       val name: String
   )
   ```
@@ -149,14 +154,14 @@
 
   ```kotlin
   // ui.TestActivity
-  class TestActivity: AppCompatActivity(){
+  class TestActivity : AppCompatActivity() {
       // ...
       override fun onCreate(savedInstanceState: Bundle?) {
           // ...
           lifecycleScope.launch(Dispatcher.IO) {
               val user = try {
                   userApi.getRandomUser().toUser()
-              } catch (e: Exception){
+              } catch (e: Exception) {
                   Log.e(TAG, "onCreate:", e)
                   null
               }
@@ -165,21 +170,22 @@
               }
           }
       }
-      
-  	@MainThread
+  
+      @MainThread
       private fun deliverUser(user: User?) {
-          textView.text = user?.name?: "Network Error."
+          textView.text = user?.name ?: "Network Error."
       }
   }
   ```
 
 
+
+
 ### 使用 @Path 和 @Query 传入参数
 
-- 现有一个API接口 `localhost:8080/test/dog/{count}`，`count` 传入一个整数，后端会以GSON数组的格式随机返回狗狗的简略信息，例如：
+- 现有一个API接口 `localhost:8080/test/dog/{count}`，`count` 传入一个整数，后端会以GSON数组的格式随机返回狗狗的简略信息，例如当 `count` 为 **2** 时：
 
   ```json
-  // localhost:8080/test/dog/2
   [
       {
           "name": "Kitty",
@@ -215,7 +221,7 @@
   }
   ```
 
-- 如果API接口需要传入的参数包含**键值对**格式，如 `localhost:8080/test/dog/{count}?age={age}&sex={sex}`，那么就需要用到`@Query`注解：
+- 如果API接口需要传入的参数包含**键值对**，如 `localhost:8080/test/dog/{count}?age={age}&sex={sex}`，那么就需要用到`@Query`注解：
 
   ```kotlin
   // data.api.DogApi
@@ -229,7 +235,134 @@
   }
   ```
 
-   
+
+
+### 为请求添加请求头信息
+
+- 使用 `@Headers` 注解静态添加请求头信息
+
+  ```kotlin
+  @Headers(
+  	"X-RapidAPI-Host: ${Contracts.X_RapidAPI_Host}",
+  	"X-RapidAPI-Key: ${Contracts.X_RapidAPI_Key}"
+  )
+  @GET("search/{name}")
+  suspend fun searchCard(): List<Card>
+  ```
+
+- 使用 `@Header` 注解动态添加请求头信息
+
+  ```kotlin
+  @GET("search/{name}")
+  suspend fun searchCard(@Header("key") key: String): List<Card>
+  ```
+
+- 使用 `OKHttpClient` 设置全局请求头信息
+
+  - 实例化 `OKHttpClient` 为一个顶级变量：
+
+    ```kotlin
+    val client = OkHttpClient.Builder()
+                .addInterceptor {
+                    val request = it.request()
+                        .newBuilder()
+                    	// 在这里添加默认头信息
+                        .addHeader("X-RapidAPI-Host", Contracts.X_RapidAPI_Host)
+                        .addHeader("X-RapidAPI-Key", Contracts.X_RapidAPI_Key)
+                        .build()
+                    it.proceed(request)
+                }.build()
+    ```
+
+  - 在每次构造 `Retrofit` 的时候设置其client为上面这个顶级变量即可：
+
+    ```kotlin
+    Retrofit.Builder()
+    	.baseUrl(Contracts.BASE_URL)
+    	.client(client)
+    	.build()
+    ```
 
 
 
+### 通过 Multipart 上传多个文件
+
+- 现有一个API接口 `localhost:8080/main.php` ，定义 **FileUploadService** 接口
+
+  ```kotlin
+  interface FileUploadService {
+      @Multipart
+      @POST("main.php")
+      suspend fun postFile(
+          @PartMap Map<String, RequestBody> files,
+          @Part("json") String description
+      ): Call<String>
+      
+      companion object {
+          val Default = Retrofit.Builder()
+          	.baseUrl(Contracts.BASE_URL)
+              .addConverterFactory(GsonConverterFactory.create())
+          	.build()
+          	.create<FileUploadService>()
+      }
+  }
+  ```
+
+- 构建一个 `String` 映射到 `RequestBody` 的 `HashMap` 用于存放多个文件：
+
+  ```kotlin
+  val files = mutableMapOf<String, RequestBody>()
+  ```
+
+- 将每个 `Uri` 分别构建为 `RequestBody`，然后同文件名映射到 **files** 中：
+
+  ```kotlin
+  uris.map(::File).forEach { file ->
+      val requestBody = file.asRequestBody("multipart/form-data".toMediaType())
+  	val fileName = file.name
+      files.put(fileName, requestBody)
+  }
+  ```
+
+- 随后调用接口：
+
+  ```kotlin
+  service.postFile(files, "string request")
+  	.enqueue(object : Callback<String> {
+      	override fun onResponse(
+          	call: Call<String>,
+              response: Response<String>
+          ) {
+              // 更新成功信息到UI
+          }
+          override fun onFailure(call: Call<String>, t: Throwable) {
+              Log.e(TAG, "postFile", t)
+              // 更新错误信息到UI
+          }
+      })
+  ```
+
+  
+
+### 从云端下载文件
+
+- 现有一个API接口 `localhost:8080/test/download/{fileName}` ，根据fileName的值返回对应文件，定义 **FileDownloadService** 接口
+
+  ```kotlin
+  interface FileDownloadService {
+      @GET("download/{filename}")
+      suspend fun downloadByFileNameFromServer(
+          @Path("fileName") fileName: String
+      ): Call<ResponseBody>
+      
+      companion object {
+          val Default = Retrofit.Builder()
+          	.baseUrl(Contracts.BASE_URL)
+              .addConverterFactory(GsonConverterFactory.create())
+          	.build()
+          	.create<FileDownloadService>()
+      }
+  }
+  ```
+
+  
