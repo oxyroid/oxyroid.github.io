@@ -4,7 +4,7 @@
 
 - **Retrofit** 是将 API 接口转换为可调用对象的工具。
 
-- xxxxxxxxxx git add .git commit -m "<message>"git pushbash
+- 本章用到的所有依赖如下
   - [ retrofit2 : retrofit ](https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit)
   - [ retrofit2 : converter-gson](https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson)
   - [ gson : gson](https://mvnrepository.com/artifact/com.google.code.gson/gson)
