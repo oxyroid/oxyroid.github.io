@@ -2,9 +2,9 @@
 
 ### 概览
 
-- ‎Retrofit‎‎ 是将 API 接口转换为可调用对象的工具。‎
+- **Retrofit** 是将 API 接口转换为可调用对象的工具。
 
-- 本章节用到的全部依赖如下
+- xxxxxxxxxx git add .git commit -m "<message>"git pushbash
   - [ retrofit2 : retrofit ](https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit)
   - [ retrofit2 : converter-gson](https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson)
   - [ gson : gson](https://mvnrepository.com/artifact/com.google.code.gson/gson)
@@ -369,7 +369,7 @@
 - 随后调用接口：
 
   ```kotlin
-  service.postFiles(files, "string request").enqueue(object : Callback<String> {
+    service.postFiles(files, "string request").enqueue(object : Callback<String> {
   	override fun onResponse(
       	call: Call<String>,
           response: Response<String>
@@ -427,5 +427,3 @@
 		}
 	})
   ```
-  
-  
