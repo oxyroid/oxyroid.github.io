@@ -1,7 +1,5 @@
 ## 初探 Reactive Programming
 
-------
-
 ### 概览
 
 - 本章将介绍响应式编程并讲解 **LiveData** 和 **Flow** 组件的原理以及使用
