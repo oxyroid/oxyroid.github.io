@@ -14,7 +14,7 @@
        // 'getById' is not a composable function, 
        // and it is always called after each recomposition
        val user = Users.getById(id)
-       UserComponment(user, modifier)
+       UserComponent(user, modifier)
        
        // ...
    }
@@ -32,7 +32,7 @@
        val user = remember(id) {
            Users.getById(id)
        }
-       UserComponment(user, modifier)
+       UserComponent(user, modifier)
   
        // ...
    }
@@ -51,7 +51,7 @@
            // logger.i("I will be invoked only once!")
            Users.getById(id)
        }
-       UserComponment(user, modifier)
+       UserComponent(user, modifier)
   
        // ...
    }
@@ -158,7 +158,7 @@
        Column(modifier) {
            var height by remember { mutableStateOf(0) }
            var offset by remember { mutableStateOf(Offset.Zero) }
-           Componment(
+           Component(
                modifier = Modifier.onGloballyPositioned { layoutCoordinates ->
                     height = layoutCoordinates.size.height
                     offset = layoutCoordinates.positionInRoot()
