@@ -12,7 +12,7 @@ fun <T> MutableStateFlow(value: T): MutableStateFlow<T>
 // 例如
 fun createFlow(): MutableStateFlow<Int> = MutableStateFlow(0)
 ```
-#### SharedFlow:
+#### SharedFlow
 ```kotlin
 // 构造 SharedFlow 不需要初始值，并且你可以指定一些详细的参数，后文会详细介绍
 fun <T> MutableSharedFlow(
@@ -23,7 +23,7 @@ fun <T> MutableSharedFlow(
 // 例如
 fun createFlow(): MutableSharedFlow<Int> = MutableSharedFlow()
 ```
-   - ChannelFlow:
+#### ChannelFlow
 ```kotlin
 // ChannelFlow 属于冷流，使用 channelFlow builder 构造
 fun <T> channelFlow(@BuilderInference block: suspend ProducerScope<T>.() -> Unit): Flow<T>
