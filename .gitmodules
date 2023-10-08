@@ -1,0 +1,3 @@
+[submodule "paper"]
+	path = themes/paper
+	url = https://github.com/realOxy/paper.git
