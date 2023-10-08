@@ -9,21 +9,21 @@
   <meta name="description" content="前言今天在Code Review 项目时，遇到了一个需要翻转List的需求。 放在Java里，不借助第三方工具包的前提想要实现需求可能要反向遍历原列表，将元素一个个add到另外一个新的列表中。 12345List&lt;Object&gt; list &#x3D; getList();ArrayList&lt;Object&gt; reversedList &#x3D; new ArrayList&lt;&gt;()">
 <meta property="og:type" content="article">
 <meta property="og:title" content="在实际开发中学习设计模式（一）">
-<meta property="og:url" content="http://example.com/2023/05/11/4_delegate/index.html">
+<meta property="og:url" content="https://realoxy.github.io/repository/2023/05/11/4_delegate/index.html">
 <meta property="og:site_name" content="Hexo">
 <meta property="og:description" content="前言今天在Code Review 项目时，遇到了一个需要翻转List的需求。 放在Java里，不借助第三方工具包的前提想要实现需求可能要反向遍历原列表，将元素一个个add到另外一个新的列表中。 12345List&lt;Object&gt; list &#x3D; getList();ArrayList&lt;Object&gt; reversedList &#x3D; new ArrayList&lt;&gt;()">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2023-05-11T09:04:25.000Z">
-<meta property="article:modified_time" content="2023-10-08T13:52:15.840Z">
+<meta property="article:modified_time" content="2023-10-08T13:56:39.060Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="kotlin">
 <meta property="article:tag" content="delegate">
 <meta name="twitter:card" content="summary">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/repository/atom.xml" title="Hexo" type="application/atom+xml">
   
   
-    <link rel="shortcut icon" href="/favicon.png">
+    <link rel="shortcut icon" href="/repository/favicon.png">
   
   
     
@@ -31,11 +31,11 @@
 
   
   
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/repository/css/style.css">
 
   
     
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+<link rel="stylesheet" href="/repository/fancybox/jquery.fancybox.min.css">
 
   
   
@@ -49,7 +49,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/repository/" id="logo">Hexo</a>
       </h1>
       
     </div>
@@ -57,20 +57,20 @@
       <nav id="main-nav">
         <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
         
-          <a class="main-nav-link" href="/">Home</a>
+          <a class="main-nav-link" href="/repository/">Home</a>
         
-          <a class="main-nav-link" href="/archives">Archives</a>
+          <a class="main-nav-link" href="/repository/archives">Archives</a>
         
       </nav>
       <nav id="sub-nav">
         
         
-          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+          <a class="nav-icon" href="/repository/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
         
         <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://realOxy.github.io/repository"></form>
       </div>
     </div>
   </div>
@@ -79,7 +79,7 @@
       <div class="outer">
         <section id="main"><article id="post-4_delegate" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2023/05/11/4_delegate/" class="article-date">
+    <a href="/repository/2023/05/11/4_delegate/" class="article-date">
   <time class="dt-published" datetime="2023-05-11T09:04:25.000Z" itemprop="datePublished">2023-05-11</time>
 </a>
     
@@ -139,11 +139,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/05/11/4_delegate/" data-id="clnhix49p0004myou49cp3ukb" data-title="在实际开发中学习设计模式（一）" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://realoxy.github.io/repository/2023/05/11/4_delegate/" data-id="clnhj2s0l0004j8nn9yzzg99k" data-title="在实际开发中学习设计模式（一）" class="article-share-link"><span class="fa fa-share">Share</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/repository/tags/delegate/" rel="tag">delegate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/repository/tags/kotlin/" rel="tag">kotlin</a></li></ul>
 
     </footer>
   </div>
@@ -151,7 +151,7 @@
     
 <nav id="article-nav">
   
-    <a href="/2023/07/18/5_compose_note_1/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/repository/2023/07/18/5_compose_note_1/" id="article-nav-newer" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
@@ -161,7 +161,7 @@
     </a>
   
   
-    <a href="/2023/01/13/3_kotlin_lambda/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/repository/2023/01/13/3_kotlin_lambda/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
       <div class="article-nav-title">Kotlin Lambda</div>
     </a>
@@ -183,7 +183,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/livedata/" rel="tag">livedata</a></li></ul>
     </div>
   </div>
 
@@ -193,7 +193,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+      <a href="/repository/tags/android/" style="font-size: 10px;">android</a> <a href="/repository/tags/compose/" style="font-size: 10px;">compose</a> <a href="/repository/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/repository/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/repository/tags/flow/" style="font-size: 15px;">flow</a> <a href="/repository/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/repository/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/repository/tags/livedata/" style="font-size: 10px;">livedata</a>
     </div>
   </div>
 
@@ -202,7 +202,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/01/">January 2023</a></li></ul>
     </div>
   </div>
 
@@ -215,23 +215,23 @@
       <ul>
         
           <li>
-            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+            <a href="/repository/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
           </li>
         
           <li>
-            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+            <a href="/repository/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
           </li>
         
           <li>
-            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+            <a href="/repository/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
           </li>
         
           <li>
-            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+            <a href="/repository/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
           </li>
         
           <li>
-            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+            <a href="/repository/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
           </li>
         
       </ul>
@@ -256,25 +256,25 @@
     </div>
     <nav id="mobile-nav">
   
-    <a href="/" class="mobile-nav-link">Home</a>
+    <a href="/repository/" class="mobile-nav-link">Home</a>
   
-    <a href="/archives" class="mobile-nav-link">Archives</a>
+    <a href="/repository/archives" class="mobile-nav-link">Archives</a>
   
 </nav>
     
 
 
-<script src="/js/jquery-3.6.4.min.js"></script>
+<script src="/repository/js/jquery-3.6.4.min.js"></script>
 
 
 
   
-<script src="/fancybox/jquery.fancybox.min.js"></script>
+<script src="/repository/fancybox/jquery.fancybox.min.js"></script>
 
 
 
 
-<script src="/js/script.js"></script>
+<script src="/repository/js/script.js"></script>
 
 
 
