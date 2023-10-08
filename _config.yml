@@ -43,13 +43,6 @@ render_drafts: false
 post_asset_folder: false
 relative_link: false
 future: true
-highlight:
-  enable: true
-  line_number: true
-  auto_detect: false
-  tab_replace: ''
-  wrap: true
-  hljs: false
 prismjs:
   enable: false
   preprocess: true
@@ -97,7 +90,13 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: paper
+highlight:
+  hljs: true
+  enable: true
+  line_number: false
+  auto_detect: true
+  tab_replace: ''
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
