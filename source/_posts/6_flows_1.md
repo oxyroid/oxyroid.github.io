@@ -4,15 +4,15 @@ date: 2023-10-08 16:22:01
 tags: [kotlin, flow]
 ---
 
-1. 构造方式
-    - StateFlow：
+### 构造方式
+#### StateFlow
 ```kotlin
 // 构造 StateFlow 需要一个 value: T 作为初始值
 fun <T> MutableStateFlow(value: T): MutableStateFlow<T>
 // 例如
 fun createFlow(): MutableStateFlow<Int> = MutableStateFlow(0)
 ```
-   - SharedFlow:
+#### SharedFlow:
 ```kotlin
 // 构造 SharedFlow 不需要初始值，并且你可以指定一些详细的参数，后文会详细介绍
 fun <T> MutableSharedFlow(
@@ -32,7 +32,7 @@ fun createFlow(): Flow<Int> = channelFlow {
    // TODO()
 }
 ```
-2. 不同场景不同表现
+### 不同场景不同表现
 ```kotlin
 val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 val flow = createFlow() 
@@ -52,7 +52,7 @@ fun cancel(job: Job?) {
    job?.cancel() 
 }
 ```
-   - 先 collect 后 emit
+#### 先 collect 后 emit
 ```kotlin
 collect()
 emit()
@@ -60,7 +60,7 @@ emit()
 // 0
 // 三种 flow 表现一致，都能正常接收
 ```
-   - 先 emit 后 collect
+#### 先 emit 后 collect
 ```kotlin
 emit()
 collect()
@@ -74,7 +74,7 @@ collect()
 // SharedFlow 则不会接收到
 // ChannelFlow 更不会接收到因为没办法在 channelFlow {} 之外 emit
 ```
-   - 先 collect 再 emit(0) 后 emit(1)
+#### 先 collect 再 emit(0) 后 emit(1)
 ```kotlin
 collect()
 emit(0)
@@ -84,7 +84,7 @@ emit(1)
 // 1
 // 三种 flow 表现一致，都能先后接收不同的值
 ```
-   - 先 collect 后 emit(0) 两次
+#### 先 collect 后 emit(0) 两次
 ```kotlin
 collect()
 emit(0)
