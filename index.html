@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://example.com/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-7_suspend_coroutine" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/10/08/7_suspend_coroutine/" class="article-date">
+  <time class="dt-published" datetime="2023-10-08T16:22:02.000Z" itemprop="datePublished">2023-10-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>suspendCoroutine { con -&gt; … } 会先生成一个SafeContinuation对象，然后将其传入block，即 “{ con -&gt; … } ”。</p>
+<p>换句话说这个block内部的参数con 实际上就是这个<br>传入的SafeContinuation对象，即在其中调用con.resumeWith本质上就是调用SafeContinuation.resumeWith。</p>
+<p>最后suspendCoroutine会调用SafeContinuation对象的getOrThrow作为返回值返回给suspendCoroutineUninterceptedOrReturn，进而返回出去。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">suspend</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">suspendCoroutine</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="keyword">crossinline</span> block: (<span class="type">Continuation</span>&lt;<span class="type">T</span>&gt;) -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: T &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// 注意，suspendCoroutineUninterceptedOrReturn 的 block 的返回值是 Any?</span></span><br><span class="line">    <span class="keyword">return</span> suspendCoroutineUninterceptedOrReturn &#123; c: Continuation&lt;T&gt; -&gt;</span><br><span class="line">        <span class="comment">// 注意，这里调用的SafeContinuation的次构造函数</span></span><br><span class="line">        <span class="keyword">val</span> safe = SafeContinuation(c.intercepted())</span><br><span class="line">        block(safe)</span><br><span class="line">        safe.getOrThrow()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来我们看一下SafeContinuation的大致结构：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">class</span> <span class="title class_">SafeContinuation</span>&lt;<span class="type">in T</span>&gt;</span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">constructor</span>(</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> delegate: Continuation&lt;T&gt;,</span><br><span class="line">    initialResult: Any?</span><br><span class="line">) : Continuation&lt;T&gt;, CoroutineStackFrame &#123;</span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">constructor</span>(delegate: Continuation&lt;T&gt;) : <span class="keyword">this</span>(delegate, UNDECIDED)</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> result: Any? = initialResult</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="meta">@Suppress(<span class="string">&quot;UNCHECKED_CAST&quot;</span>)</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">val</span> RESULT = AtomicReferenceFieldUpdater.newUpdater&lt;SafeContinuation&lt;*&gt;, Any?&gt;(</span><br><span class="line">            SafeContinuation::<span class="keyword">class</span>.java, Any::<span class="keyword">class</span>.java <span class="keyword">as</span> Class&lt;Any?&gt;, <span class="string">&quot;result&quot;</span></span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">actual</span> <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">resumeWith</span><span class="params">(result: <span class="type">Result</span>&lt;<span class="type">T</span>&gt;)</span></span> = ...</span><br><span class="line"></span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">actual</span> <span class="function"><span class="keyword">fun</span> <span class="title">getOrThrow</span><span class="params">()</span></span>: Any? = ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>SafeContinuation伴生类里有一个状态机RESULT，负责对SafeContinuation实例的 result 成员进行原子更新，<br>比如调用 RESULT.compareAndSet(safe, UNDECIDED, result.value) 代表 safe 的 result 被从 UNDECIDED 更新成了 result.value。</p>
+<p>如果你在 block 执行完毕之前就调用了 safe.resumeWith，<br>那 SafeContinuation 内部的调用顺序就是 resumeWith -&gt; getOrThrow。</p>
+<p>如果你在执行block时把safe实例保存了下来，在block执行完毕后再调用safe.resumeWith，<br>那SafeContinuation 内部的调用顺序就是 getOrThrow -&gt; resumeWith。</p>
+<p>这两种方式就决定了函数是否真正的挂起：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">actual</span> <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">resumeWith</span><span class="params">(result: <span class="type">Result</span>&lt;<span class="type">T</span>&gt;)</span></span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="keyword">val</span> cur = <span class="keyword">this</span>.result</span><br><span class="line">        <span class="keyword">when</span> &#123;</span><br><span class="line">            cur === UNDECIDED -&gt; <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, UNDECIDED, result.value)) <span class="keyword">return</span></span><br><span class="line">            cur === COROUTINE_SUSPENDED -&gt; <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, COROUTINE_SUSPENDED, RESUMED)) &#123;</span><br><span class="line">                delegate.resumeWith(result)</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> -&gt; <span class="keyword">throw</span> IllegalStateException(<span class="string">&quot;Already resumed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="function"><span class="keyword">fun</span> <span class="title">getOrThrow</span><span class="params">()</span></span>: Any? &#123;</span><br><span class="line">    <span class="keyword">var</span> result = <span class="keyword">this</span>.result</span><br><span class="line">    <span class="keyword">if</span> (result === UNDECIDED) &#123;</span><br><span class="line">        <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, UNDECIDED, COROUTINE_SUSPENDED)) <span class="keyword">return</span> COROUTINE_SUSPENDED</span><br><span class="line">        result = <span class="keyword">this</span>.result</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">when</span> &#123;</span><br><span class="line">        result === RESUMED -&gt; COROUTINE_SUSPENDED</span><br><span class="line">        result <span class="keyword">is</span> Result.Failure -&gt; <span class="keyword">throw</span> result.exception</span><br><span class="line">        <span class="keyword">else</span> -&gt; result</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>提醒！suspendCoroutine 内部创建的 SafeContinuation 的 result 初始值是 <em>UNDECIDED</em>。</p>
+<ol>
+<li><p>先调用 resumeWith：</p>
+<p>result 会先从 UNDECIDED 变成具体的值，因此等到 getOrThrow 调用时，就直接返回出去了，就和调用普通函数一样。</p>
+</li>
+<li><p>后调用 resumeWith:</p>
+<p>result 初始值 UNDECIDED，getOrThrow 调用时，result 会被更新为 COROUTINE_SUSPENDED，并且返回 COROUTINE_SUSPENDED 给外部。</p>
+</li>
+</ol>
+<p>总结，getOrThrow 可能返回 COROUTINE_SUSPENDED 或者 result: Any?（可能仍然是 COROUTINE_SUSPENDED），而外部还有一层<br>suspendCoroutineUninterceptedOrReturn ，我们到看一下他的实现：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">suspend</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">suspendCoroutineUninterceptedOrReturn</span><span class="params">(<span class="keyword">crossinline</span> block: (<span class="type">Continuation</span>&lt;<span class="type">T</span>&gt;) -&gt; <span class="type">Any</span>?)</span></span>: T &#123;</span><br><span class="line">    contract &#123; callsInPlace(block, InvocationKind.EXACTLY_ONCE) &#125;</span><br><span class="line">    <span class="keyword">throw</span> NotImplementedError(<span class="string">&quot;Implementation of suspendCoroutineUninterceptedOrReturn is intrinsic&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>intrinsic 意味着 他的实现是在是内置于 compiler 的，不过我们阅读他的注释可以知道，他用于获取在挂起函数内部的当前<br>Continuation 实例，可以选择挂起当前运行的协程，或立即返回结果而不进行挂起：</p>
+<ol>
+<li>如果代码块返回特殊的 COROUTINE_SUSPENDED 值，这意味着挂起函数已挂起执行，不会立即返回任何结果。在这种情况下，<strong>提供给代码块的<br>Continuation （上文的 c.intercepted(): Continuation）将在将来的某个时刻通过调用 resumeWith 来恢复以便继续计算</strong>。</li>
+<li>否则，代码块的返回值必须具有可分配给 T 类型的类型，并表示此挂起函数的结果。这意味着执行未被挂起，并且提供给代码块的<br>Continuation 将不会被调用。</li>
+</ol>
+<p>所以，挂起本质上是 getOrThrow 返回 COROUTINE_SUSPENDED 进而 suspendCoroutineUninterceptedOrReturn 阻塞了执行。</p>
+<p>而恢复的本质是 resumeWith 的调用，result会被从COROUTINE_SUSPENDED更新为RESUMED，并且suspendCoroutineUninterceptedOrReturn的参数<br>c 的 c.intercepted() : Continuation 会被调用 resumeWith。</p>
+<p>而一个未挂起过直接返回确切值的SafeContinuation，我们认为他“并未真正挂起”。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/10/08/7_suspend_coroutine/" data-id="clnhix49t0009myou42ib8j9q" data-title="Kotlin Coroutine 挂起本质" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-6_flows_1" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/10/08/6_flows_1/" class="article-date">
+  <time class="dt-published" datetime="2023-10-08T16:22:01.000Z" itemprop="datePublished">2023-10-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <ol>
+<li>构造方式<ul>
+<li>StateFlow： <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 构造 StateFlow 需要一个 value: T 作为初始值</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">MutableStateFlow</span><span class="params">(value: <span class="type">T</span>)</span></span>: MutableStateFlow&lt;T&gt;</span><br><span class="line"><span class="comment">// 例如</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">createFlow</span><span class="params">()</span></span>: MutableStateFlow&lt;<span class="built_in">Int</span>&gt; = MutableStateFlow(<span class="number">0</span>)</span><br></pre></td></tr></table></figure></li>
+<li>SharedFlow:<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 构造 SharedFlow 不需要初始值，并且你可以指定一些详细的参数，后文会详细介绍</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">MutableSharedFlow</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    replay: <span class="type">Int</span> = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    extraBufferCapacity: <span class="type">Int</span> = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    onBufferOverflow: <span class="type">BufferOverflow</span> = BufferOverflow.SUSPEND,</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: MutableSharedFlow&lt;T&gt;</span><br><span class="line"><span class="comment">// 例如</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">createFlow</span><span class="params">()</span></span>: MutableSharedFlow&lt;<span class="built_in">Int</span>&gt; = MutableSharedFlow()</span><br></pre></td></tr></table></figure></li>
+<li>ChannelFlow:<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ChannelFlow 属于冷流，使用 channelFlow builder 构造</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">channelFlow</span><span class="params">(<span class="meta">@BuilderInference</span> block: <span class="type">suspend</span> <span class="type">ProducerScope</span>&lt;<span class="type">T</span>&gt;.() -&gt; <span class="type">Unit</span>)</span></span>: Flow&lt;T&gt;</span><br><span class="line"><span class="comment">// 例如</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">createFlow</span><span class="params">()</span></span>: Flow&lt;<span class="built_in">Int</span>&gt; = channelFlow &#123; </span><br><span class="line">    <span class="comment">// TODO()</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li>不同场景不同表现<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> scope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())</span><br><span class="line"><span class="keyword">val</span> flow = createFlow() </span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">collect</span><span class="params">()</span></span>: Job = scope.launch &#123;     </span><br><span class="line">    flow.collect &#123;</span><br><span class="line">        println(it)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">emit</span><span class="params">(i: <span class="type">Int</span> = <span class="number">0</span>)</span></span> &#123;</span><br><span class="line">    scope.launch &#123;</span><br><span class="line">        <span class="comment">// can only be MutableStateFlow or MutableSharedFlow</span></span><br><span class="line">        <span class="comment">// because cold flow cannot emit out of flow builder</span></span><br><span class="line">        flow.emit(i) </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">cancel</span><span class="params">(job: <span class="type">Job</span>?)</span></span> &#123;</span><br><span class="line">    job?.cancel() </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>先 collect 后 emit<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">collect()</span><br><span class="line">emit()</span><br><span class="line"><span class="comment">// [StateFlow, SharedFlow, ChannelFlow]</span></span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 三种 flow 表现一致，都能正常接收</span></span><br></pre></td></tr></table></figure></li>
+<li>先 emit 后 collect<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">emit()</span><br><span class="line">collect()</span><br><span class="line"><span class="comment">// [StateFlow]</span></span><br><span class="line"><span class="comment">// 0, &lt;will collect stored value&gt;</span></span><br><span class="line"><span class="comment">// [SharedFlow]</span></span><br><span class="line"><span class="comment">// &lt;cannot collect stored value&gt;</span></span><br><span class="line"><span class="comment">// [ChannelFlow]</span></span><br><span class="line"><span class="comment">// &lt;cannot emit&gt;</span></span><br><span class="line"><span class="comment">// StateFlow 始终会接收最新的值，即便该值在 collect 之前就存在</span></span><br><span class="line"><span class="comment">// SharedFlow 则不会接收到</span></span><br><span class="line"><span class="comment">// ChannelFlow 更不会接收到因为没办法在 channelFlow &#123;&#125; 之外 emit</span></span><br></pre></td></tr></table></figure></li>
+<li>先 collect 再 emit(0) 后 emit(1)<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">collect()</span><br><span class="line">emit(<span class="number">0</span>)</span><br><span class="line">emit(<span class="number">1</span>)</span><br><span class="line"><span class="comment">// [StateFlow, SharedFlow, ChannelFlow]</span></span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="comment">// 三种 flow 表现一致，都能先后接收不同的值</span></span><br></pre></td></tr></table></figure></li>
+<li>先 collect 后 emit(0) 两次<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">collect()</span><br><span class="line">emit(<span class="number">0</span>)</span><br><span class="line">emit(<span class="number">0</span>)</span><br><span class="line"><span class="comment">// [StateFlow]</span></span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// &lt;will not collect repeated value&gt;</span></span><br><span class="line"><span class="comment">// [SharedFlow, ChannelFlow]</span></span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// StateFlow 会根据 equals 自动过滤与上一次重复的值</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>未完结</p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/10/08/6_flows_1/" data-id="clnhix49s0008myou8cut5fc0" data-title="StateFlow, SharedFlow 和 ChannelFlow" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-5_compose_note_1" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/07/18/5_compose_note_1/" class="article-date">
+  <time class="dt-published" datetime="2023-07-18T23:49:02.000Z" itemprop="datePublished">2023-07-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <ol>
+<li><p>使用 <code>remember</code> 避免在重组时反复获取对象：</p>
+<p>我们在 Composable函数体内，根据 UIState 或者 Composable参数 提供的值，动态的计算一些展示给用户的数据，<br>可能需要进行数据的转换，其中可能涉及复杂的逻辑运算或者IO运算，重组时会导致其反复执行获取</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    id: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    <span class="comment">// &#x27;getById&#x27; is not a composable function, </span></span><br><span class="line">    <span class="comment">// and it is always called after each recomposition</span></span><br><span class="line">    <span class="keyword">val</span> user = Users.getById(id)</span><br><span class="line">    UserComponent(user, modifier)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>remember</code> 可以很好的避免重组过程中反复执行获取对象，他的 <code>block : () -&gt; R</code> 只有当任意一个 key 与重组前对应值不等时重新构造</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    id: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    <span class="comment">// recall &#x27;getById&#x27; when id is changed</span></span><br><span class="line">    <span class="keyword">val</span> user = remember(id) &#123;</span><br><span class="line">        Users.getById(id)</span><br><span class="line">    &#125;</span><br><span class="line">    UserComponent(user, modifier)</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果你始终不想对象被重新获取，可以不传入 key</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    id: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    <span class="comment">// never changed</span></span><br><span class="line">    <span class="keyword">val</span> user = remember &#123;</span><br><span class="line">        <span class="comment">// logger.i(&quot;I will be invoked only once!&quot;)</span></span><br><span class="line">        Users.getById(id)</span><br><span class="line">    &#125;</span><br><span class="line">    UserComponent(user, modifier)</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>CompositionLocal</code> 隐式传递参数：</p>
+<p>有一些参数不必作为 Composable 参数层层传递，例如 <code>Density</code>，他承载着屏幕像素密度的相关信息</p>
+<p>通过 Composable 参数层层传递的话，和 <code>Modifier</code> 类似，不过 <code>Density</code> 不同于 <code>Modifier</code><br>，它是一个不需要在层级间转换的对象，所以将其做成一种静态获取的方式似乎更加合适</p>
+<p>Compose 为了解决这一问题，设计出了<strong>隐式传参</strong>， 你可以在 Composable 中使用 <code>LocalDensity.current</code> 获取 <code>Density</code> 对象，</p>
+<p>注意，这里的 <code>current</code> 的 getter 是一个 Composable 函数，因此不需要 <code>remember</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">     id: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">     modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">     <span class="keyword">val</span> density = LocalDensity.current</span><br><span class="line">     </span><br><span class="line">     <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>类似的，我们也可以自定义隐式传参</p>
+<p>首先，定义想要被传参的类</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">Theme</span>(</span><br><span class="line">     <span class="keyword">val</span> primary: Color,</span><br><span class="line">     <span class="keyword">val</span> background: Color</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>然后，定义用于获取参数的 <code>CompositionLocal</code>， 它分为<br><code>ProvidableCompositionLocal</code>,<code>DynamicProvidableCompositionLocal</code>,<br>以及 <code>StaticProvidableCompositionLocal</code> 三个子类型，其中<code>ProvidableCompositionLocal</code> 是其他两个的父类</p>
+<p>可以使用 <code>compositionLocalOf</code> 构造 <code>DynamicProvidableCompositionLocal</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> LocalTheme = compositionLocalOf&lt;Theme&gt; &#123;                                                       </span><br><span class="line">     <span class="comment">// if there is no instance found, use this default value</span></span><br><span class="line">     defaultTheme</span><br><span class="line">     <span class="comment">// or throw an error</span></span><br><span class="line">     <span class="comment">// error(&quot;no theme provided&quot;)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而 <code>StaticProvidableCompositionLocal</code> 一般用于传递静态或者很少发生改变的对象，可以使用 <code>staticCompositionLocalOf</code> 构造</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// use StaticProvidableCompositionLocal is not recommend here</span></span><br><span class="line"><span class="keyword">val</span> LocalTheme = staticCompositionLocalOf&lt;Theme&gt; &#123;              </span><br><span class="line">     error(<span class="string">&quot;no theme provided&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>与 <code>compositionLocalOf</code> 不同，<code>staticCompositionLocalOf</code> 的读取不会被 composer 跟踪，<br>并且在 <code>CompositionLocalProvider</code> 调用中更改提供的值将导致重新组合整个内容，而不仅仅是在组合中使用本地值的地方。</p>
+</blockquote>
+<p>最后，在你想的 Composable 位置，使用 <code>CompositionLocalProvider</code> 传入你想传递的对象</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">App</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">     modifier: <span class="type">Modifier</span> = Modifier,</span></span></span><br><span class="line"><span class="params"><span class="function">     content: @<span class="type">Composable</span> () -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">     <span class="comment">// It will be the default instance if parent composables do not provide as well</span></span><br><span class="line">     <span class="keyword">val</span> outerTheme = LocalTheme.current</span><br><span class="line">     CompositionLocalProvider(</span><br><span class="line">          LocalTheme provide lightTheme,</span><br><span class="line">          <span class="comment">// etc</span></span><br><span class="line">     ) &#123;</span><br><span class="line">         <span class="comment">// It will be lightTheme</span></span><br><span class="line">         <span class="keyword">val</span> innerTheme = LocalTheme.current</span><br><span class="line"></span><br><span class="line">         <span class="comment">// child composables could get local theme,</span></span><br><span class="line">         <span class="comment">// and they can also change current local theme in their scopes</span></span><br><span class="line">         content()</span><br><span class="line"></span><br><span class="line">         <span class="comment">// ...</span></span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>避免错误使用 <code>Modifier#onGloballyPositioned</code>:</p>
+<p>有时候我们需要测量组件的尺寸以及偏移量信息，可以使用 <code>Modifier#onGloballyPositioned</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    Column(modifier) &#123;</span><br><span class="line">        <span class="keyword">var</span> height <span class="keyword">by</span> remember &#123; mutableStateOf(<span class="number">0</span>) &#125;</span><br><span class="line">        <span class="keyword">var</span> offset <span class="keyword">by</span> remember &#123; mutableStateOf(Offset.Zero) &#125;</span><br><span class="line">        Component(</span><br><span class="line">            modifier = Modifier.onGloballyPositioned &#123; layoutCoordinates -&gt;</span><br><span class="line">                 height = layoutCoordinates.size.height</span><br><span class="line">                 offset = layoutCoordinates.positionInRoot()</span><br><span class="line">            &#125;</span><br><span class="line">        )</span><br><span class="line">        Text(<span class="string">&quot;height: <span class="variable">$height</span>, offset: <span class="variable">$offset</span>&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当LayoutCoordinates可用时，此回调将至少被调用一次，并且每当元素在窗口内的位置发生变化时都会被调用。<br>然而，并不能保证每次与修改的元素相对于屏幕的位置发生变化时都会调用该回调。例如，系统可能会在不触发回调的情况下移动窗口内的内容。<br>如果您正在使用LayoutCoordinates来计算屏幕上的位置，而不仅仅是窗口内部的位置，则可能不会收到回调。</p>
+<p>如需测量尺寸，改为使用 <code>BoxWithConstraints</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">MainScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    modifier: <span class="type">Modifier</span> = Modifier</span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    Column(modifier) &#123;</span><br><span class="line">        <span class="keyword">var</span> height <span class="keyword">by</span> remember &#123; mutableStateOf(<span class="number">0</span>) &#125;</span><br><span class="line">        BoxWithConstraints &#123;</span><br><span class="line">            height = constraints.maxHeight</span><br><span class="line">            Componment()</span><br><span class="line">        &#125;</span><br><span class="line">        Text(<span class="string">&quot;height: <span class="variable">$height</span>&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/07/18/5_compose_note_1/" data-id="clnhix49q0005myouhp8ba7o9" data-title="Compose 新手容易忽视的点（一）" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-4_delegate" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/05/11/4_delegate/" class="article-date">
+  <time class="dt-published" datetime="2023-05-11T09:04:25.000Z" itemprop="datePublished">2023-05-11</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今天在Code Review 项目时，遇到了一个需要翻转List的需求。</p>
+<p>放在Java里，不借助第三方工具包的前提想要实现需求可能要反向遍历原列表，将元素一个个add到另外一个新的列表中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Object&gt; list = getList();</span><br><span class="line">ArrayList&lt;Object&gt; reversedList = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> list.size() - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">    reversedList.add(list.get(i));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>或者通过 <code>void Collections#reverse(List list)</code> 在原列表中翻转，不过这不是我们希望的，因为这样限制了传入的 <code>list</code> 必须是 <strong>Mutable</strong> 的，并且直接对参数修改不符合语义，容易造成 bug 且是非线程安全的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">List</span> <span class="variable">list</span> <span class="operator">=</span> getList();</span><br><span class="line">Collections.reverse();</span><br></pre></td></tr></table></figure>
+
+<p>多亏Kotlin的 <strong>Extension Function</strong> 外加丰富的标准库函数，可以直接调用 <code>List.reversed()</code> 函数，返回一个翻转了的新实例，省掉了Java中唠叨的遍历。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> list = getList()</span><br><span class="line"><span class="keyword">val</span> reversedList = list.reversed()</span><br></pre></td></tr></table></figure>
+
+<p>下面是标准库中对 <code>List.reversed()</code> 函数的实现（实际上是对List的父接口 <code>Iterable</code> 的扩展实现）：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> Iterable<span class="type">&lt;T&gt;</span>.<span class="title">reversed</span><span class="params">()</span></span>: List&lt;T&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span> <span class="keyword">is</span> Collection &amp;&amp; size &lt;= <span class="number">1</span>) <span class="keyword">return</span> toList()</span><br><span class="line">    <span class="keyword">val</span> list = toMutableList()</span><br><span class="line">    <span class="comment">// 这里是 Native 实现</span></span><br><span class="line">    list.reverse()</span><br><span class="line">    <span class="keyword">return</span> list</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>明明 Kotlin 中 public 是默认修饰，是可以省略掉的，不懂为啥标准库都喜欢写上</p>
+</blockquote>
+<h2 id="委托模式"><a href="#委托模式" class="headerlink" title="委托模式"></a>委托模式</h2><p>不过翻转这一操作本来 <strong>O(n)</strong> 复杂度就高，数据量一大，在实时刷新的 UI 中，必然会造成卡顿（其实可以通过把耗时任务提到其他 Layer 解决，不过这不是关键）。</p>
+<p>后来，我发现除了 <code>List.reversed()</code> 函数，Kotlin标准库还定义了一个与之命名很像的函数—— <code>List.asReversed()</code>，敏锐的感觉这个 “as” 一定是用来解决 非”as” 的某些问题的。 </p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> List<span class="type">&lt;T&gt;</span>.<span class="title">asReversed</span><span class="params">()</span></span>: List&lt;T&gt; = ReversedListReadOnly(<span class="keyword">this</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这个函数将自身的实例传递给了一个叫做 <code>ReversedListReadOnly</code> 的类。</p>
+<blockquote>
+<p>注意：与Java不同的是，Kotlin 中的 List 仅具有Readable特性，如 get，size；不具备 Mutable（Writable） 特性，如 add，set，remove 等，这些 Mutable 特性被封装在了List的子接口 MutableList 中，这一设计在 Kotlin 中被称为“读写分离”</p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">open</span> <span class="keyword">class</span> <span class="title class_">ReversedListReadOnly</span>&lt;<span class="type">out T</span>&gt;(<span class="keyword">private</span> <span class="keyword">val</span> delegate: List&lt;T&gt;) : AbstractList&lt;T&gt;() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> size: <span class="built_in">Int</span> <span class="keyword">get</span>() = delegate.size</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">get</span><span class="params">(index: <span class="type">Int</span>)</span></span>: T = delegate[reverseElementIndex(index)]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打开源码发现， <code>ReversedListReadOnly</code> 和 <code>AbstractList</code> 都是<code>List</code> 的子类，显然 <code>ReversedListReadOnly</code> 是 <code>List</code> 的委托类，他重写了 <code>get(index: Int): T</code> 方法，使用 <code>reverseElementIndex(index: Int): Int</code> 返回的下标对被委托的原列表进行取值。不出意外的话，<code>reverseElementIndex</code> 的实现应该是返回翻转的下标：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> List<span class="type">&lt;*&gt;</span>.<span class="title">reverseElementIndex</span><span class="params">(index: <span class="type">Int</span>)</span></span> =</span><br><span class="line">    <span class="keyword">if</span> (index <span class="keyword">in</span> <span class="number">0.</span>.lastIndex) lastIndex - index <span class="keyword">else</span> <span class="keyword">throw</span> IndexOutOfBoundsException(<span class="string">&quot;Element index <span class="variable">$index</span> must be in range [<span class="subst">$&#123;<span class="number">0.</span>.lastIndex&#125;</span>].&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：这里的 <code>lastIndex: Int</code> 是 Kotlin 对 List 扩展的便捷属性，其值为 <code>size - 1</code>，代表列表末端的下标</p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">val</span> &lt;T&gt; List&lt;T&gt;.lastIndex: <span class="built_in">Int</span></span><br><span class="line">    <span class="keyword">get</span>() = <span class="keyword">this</span>.size - <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>这样就巧妙地<strong>假装</strong>翻转了列表。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>Kotlin 通过运用委托模式简单的包装一层容器，就将翻转列表这一需求**从复杂度 O(n) 降低为 O(1)**。这一源码级别的优秀范例让只是对着枯燥课本学习设计模式的我充分感悟到委托设计模式的有用之处。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/05/11/4_delegate/" data-id="clnhix49p0004myou49cp3ukb" data-title="在实际开发中学习设计模式（一）" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-3_kotlin_lambda" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/01/13/3_kotlin_lambda/" class="article-date">
+  <time class="dt-published" datetime="2023-01-13T21:29:13.000Z" itemprop="datePublished">2023-01-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>介绍Kotlin的特性时，往往喜欢拿Java来做对比  <del>（Java：老了被嫌弃了</del></p>
+<p>在Java中，似乎只有引用类型的实例才称得上对象，基础类型和函数都最多只能算“二等公民”。<br>设计基础类型有一定的好处，即基本类型不需要实例化便可以使用，相比于与之对应的包装类型更加节省内存。<br>不过，Kotlin去除了基本类型这一设计。<br>函数不算做对象只能说是Java的设计缺陷，想要实现其他语言类似的效果，可以通过SAM间接传递函数引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SAM</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">OneParamRunnable</span>&lt;T&gt; &#123;</span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">run</span><span class="params">(T t)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">log</span><span class="params">(Object o, OneParamRunnable&lt;Object&gt; runnable)</span> &#123;</span><br><span class="line">        Logger.log(<span class="string">&quot;OneParam Runnable: ” + o.toString()&quot;</span>);</span><br><span class="line">        runnable.run(o);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// 利用Java8简化Lambda的调用：</span></span><br><span class="line">        Main.log(<span class="number">16</span>, (i) -&gt; perf.push(i));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用上的确比Java 8之前要<strong>优雅</strong>很多了，不过他还是有不少痛点：</p>
+<ol>
+<li>语言缺陷。没有单独的函数类型，需要借助SAM实现；</li>
+<li>声明冗余。参数以及返回值相同的SAM不能相互替代，不能彼此兼容；</li>
+<li>不够DSL。调用上不符合DSL风格。</li>
+</ol>
+<p>让我们来看看，Kotlin是如何解决这些痛点的：</p>
+<h2 id="Kotlin函数类型"><a href="#Kotlin函数类型" class="headerlink" title="Kotlin函数类型"></a>Kotlin函数类型</h2><p>在Kotlin中，可以将现有函数通过函数引用的方式进行传递，这与Java后来更新的函数引用类似。例如，某函数需要传入一个接收一个Int参数并返回一个String参数的Lambda时：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Kotlin</span></span><br><span class="line"><span class="keyword">typealias</span> Converter = (<span class="built_in">Int</span>) -&gt; String</span><br><span class="line"></span><br><span class="line"><span class="comment">// …</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">onAction</span><span class="params">(i: <span class="type">Int</span>, c: <span class="type">Converter</span>)</span></span> = c(i)</span><br><span class="line"><span class="comment">// 这里即为函数引用</span></span><br><span class="line">onAction(<span class="number">1</span>, <span class="built_in">Int</span>::toString)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这里的类型别名不是必要的</p>
+</blockquote>
+<p>也许你注意到了，Kotlin中不需要SAM，因为函数在Kotlin中有了自己的类型，定义需要使用到箭头，<br>箭头左侧表示参数列表，箭头右侧表示返回值，参数列表需要用括号包裹，多个参数需要在括号内用逗号分割。<br>上面的<code>(Int) -&gt; String</code>代表参数列表为一个Int，返回值为String的函数。<br>那么，你能猜出“参数列表为Int和Int，返回值为Int”的函数类型怎么表示吗？<br>另外，由于函数是类型，所以函数也能作为函数类型的参数或返回值，如：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="function"><span class="keyword">fun</span> <span class="title">get</span><span class="params">(d: <span class="type">Double</span>)</span></span>: (<span class="built_in">Int</span>) -&gt; String</span><br><span class="line"><span class="comment">// …</span></span><br><span class="line"><span class="keyword">val</span> getImpl: (<span class="built_in">Double</span>) -&gt; ((<span class="built_in">Int</span>) -&gt; String) = TODO()</span><br><span class="line"><span class="comment">// invoke即“调用”的意思</span></span><br><span class="line"><span class="keyword">val</span> s: String = getImpl(<span class="number">12.0</span>).invoke(<span class="number">2</span>)</span><br><span class="line"><span class="comment">// 等价写法</span></span><br><span class="line"><span class="keyword">val</span> s2: String = getImpl(<span class="number">12.0</span>)(<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lambda兼容SAM"><a href="#Lambda兼容SAM" class="headerlink" title="Lambda兼容SAM"></a>Lambda兼容SAM</h2><p>Java中即便存在作用上相同的SAM，也不能混用，因此就造成可能要定义大量SAM。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Java</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">SAM1</span> &#123;</span><br><span class="line">    String <span class="title function_">action</span><span class="params">(<span class="type">int</span> i)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">SAM2</span> &#123;</span><br><span class="line">    String <span class="title function_">action</span><span class="params">(<span class="type">int</span> i)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">runJava</span><span class="params">(SAM1 sam)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> sam.action(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">SAM1</span> <span class="variable">sam1</span> <span class="operator">=</span> Integer::toString;</span><br><span class="line">        <span class="type">SAM2</span> <span class="variable">sam2</span> <span class="operator">=</span> Integer::toString;</span><br><span class="line">        runJava(sam1);</span><br><span class="line">        runJava(sam2); <span class="comment">// ERROR</span></span><br><span class="line">        runJava(Integer::toString);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Kotlin显然没有这种问题，因为Kotlin中的函数类型就是以函数的结构定义的：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Kotlin</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">runKt</span><span class="params">(block: (<span class="type">Int</span>) -&gt; <span class="type">String</span>)</span></span> = block.invoke(<span class="number">1</span>)</span><br><span class="line"><span class="comment">// …</span></span><br><span class="line">runKt(<span class="built_in">Int</span>::toString)</span><br></pre></td></tr></table></figure>
+
+<h2 id="DSL-Style"><a href="#DSL-Style" class="headerlink" title="DSL Style"></a>DSL Style</h2><ol>
+<li><p>当参数列表中最后一个参数为Lambda时，可以将大括号提出小括号：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">runKt &#123; i -&gt;</span><br><span class="line">    <span class="keyword">return</span> i.toString()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Lambda可以省略 <code>return</code>，执行的最后一行的返回值作为Lambda的返回值：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">runKt &#123; i -&gt;</span><br><span class="line">    <span class="keyword">if</span> (i &gt; <span class="number">3</span>) i - <span class="number">3</span></span><br><span class="line">    <span class="keyword">else</span> i</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果Lambda的参数只有一个，不需要显式声明，默认为用<code>it</code>表示：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">runKt &#123;</span><br><span class="line">    <span class="keyword">if</span> (it &gt; <span class="number">3</span>) it - <span class="number">3</span></span><br><span class="line">    <span class="keyword">else</span> it</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>对于多个参数，则必须显示声明，用不到的参数，用 <code>_</code> 表示：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">doWork</span><span class="params">(i1: <span class="type">Int</span>, i2: <span class="type">Int</span>, block: (<span class="type">Int</span>, <span class="type">Int</span>) -&gt; <span class="type">Int</span>)</span></span>: <span class="built_in">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> block(i1, i2)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// …</span></span><br><span class="line">doWork(<span class="number">1</span>, <span class="number">2</span>) &#123; _, i2 -&gt; abs(i2) &#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Lambda 内参数也可以显式其类型：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">doWork(<span class="number">1</span>, <span class="number">2</span>) &#123; i1: <span class="built_in">Int</span>, i2: <span class="built_in">Int</span> -&gt;</span><br><span class="line">     maxOf(i1, i2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/01/13/3_kotlin_lambda/" data-id="clnhix49o0003myoueu6m4549" data-title="Kotlin Lambda" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-2_reactive_programming" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/01/13/2_reactive_programming/" class="article-date">
+  <time class="dt-published" datetime="2023-01-13T15:01:55.000Z" itemprop="datePublished">2023-01-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/01/13/2_reactive_programming/">初探 Reactive Programming</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><ul>
+<li>本章将介绍响应式编程并讲解 <strong>LiveData</strong> 和 <strong>Flow</strong> 组件的原理以及使用</li>
+</ul>
+<h3 id="生产者-消费者"><a href="#生产者-消费者" class="headerlink" title="生产者 - 消费者"></a>生产者 - 消费者</h3><ul>
+<li>通常负责从本地数据库或远程数据库获取数据的组件我们称之为<strong>生产者</strong>，而使用数据并进行“展示”等操作的组件我们称之为<strong>消费者</strong></li>
+<li>在传统的架构模式下，我们总是习惯于在我们需要的时候通知生产者进行<strong>生产</strong>数据，利用接口回调的方式，处理数据然后将结果用于消费者的<strong>消费</strong>行为</li>
+<li>不过，这种传统的“生产-消费”模式往往会将<strong>数据操作</strong>、<strong>逻辑操作</strong>以及<strong>UI操作</strong>耦合，当项目变得稍微庞大一些，或者想要修改陈旧代码的时候往往会变得十分困难，甚至在不同数据需要互相组合调用的时候更容易写出BUG</li>
+</ul>
+<h3 id="什么是响应式编程"><a href="#什么是响应式编程" class="headerlink" title="什么是响应式编程"></a>什么是响应式编程</h3><ul>
+<li>响应式编程巧妙地解决了上面的问题，我们通过在 生产者 - 消费者 当中添加一个“中介”负责管理数据的存储与分发，我们称这个中介为 <strong>可观察数据</strong> 或 <strong>响应式数据</strong></li>
+<li>生产者生产的数据可以存放到这个可观察数据中，消费者可以通过<strong>观察者</strong>订阅这个可观察数据，生产者&#x2F;消费者 与可观察数据的关系是多对多的，每当因生产者生产行为导致可观察数据的值改变，可观察数据（通常情况下）会立即通知所有订阅他的观察者以便消费者进行消费</li>
+</ul>
+<h3 id="LifecycleOwner"><a href="#LifecycleOwner" class="headerlink" title="LifecycleOwner"></a>LifecycleOwner</h3><ul>
+<li>LifecycleOwner是一个接口，通过 <code>LifecycleOwner#getLifecycle(): Lifecycle</code> ，可以获取到Lifecycle对象</li>
+<li>Lifecycle是定义一个具有 Android 生命周期的对象，通过<code>Lifecycle#getCurrentState(): State</code>，可以获取到当前生命周期的状态，如 <strong>ON_CREATE</strong>，<strong>ON_START</strong> 等</li>
+</ul>
+<h3 id="Observer"><a href="#Observer" class="headerlink" title="Observer"></a>Observer</h3><ul>
+<li>Observer是一个 <strong>SAM接口</strong> ，是可以从 LiveData 接收数据的简单回调 <code>Observer#onChange(T)</code></li>
+</ul>
+<h3 id="LiveData"><a href="#LiveData" class="headerlink" title="LiveData"></a>LiveData</h3><ul>
+<li><p>LiveData 是一个可以在给定生命周期内观察到的数据持有者类。这意味着Observer可以与LifecycleOwner成对添加，并且只有当配对的 LifecycleOwner 处于活动状态时，才会通知该Observer数据发生的变化</p>
+</li>
+<li><p>在Android中，<strong>ComponentActivity</strong> 以及 <strong>Fragment</strong> 都已默认实现了LifecycleOwner接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.source.MessageDataSource (生产者)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageDataSource</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getMessage</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">return</span> mockApi.getMessage()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.MessageViewModel (存放可观察数据)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageViewModel</span>(</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">val</span> dataSource: MessageDataSource</span><br><span class="line">): ViewModel() &#123;</span><br><span class="line">    <span class="comment">// MutableLiveData是LiveData的子类，其拥有改变其持有数据的APIs</span></span><br><span class="line">    <span class="keyword">val</span> messageLiveData = MutableLiveData&lt;String&gt;()</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getMessge</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 同步方式改变其持有数据：MutableLiveData&lt;T&gt;#setValue(T)</span></span><br><span class="line">        <span class="comment">// 异步方式改变其持有数据：MutableLiveData&lt;T&gt;#postValue(T)</span></span><br><span class="line">        messageLiveData.value = dataSource.getMessage()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.MessageActivity (消费者)</span></span><br><span class="line"><span class="comment">// AppCompatActivity是ComponentActivity的子类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageActivity</span>: <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="comment">// ComponentActivity#viewModels((() -&gt; Factory)): Lazy&lt;VM&gt;</span></span><br><span class="line">    <span class="comment">// 返回一个 Lazy 委托以访问 ComponentActivity 的 ViewModel</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> viewModel <span class="keyword">by</span> viewModels&lt;MessageViewModel&gt;()</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> textView: TextView</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> button: Button</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 订阅此数据：LiveData#observe(LifecycleOwener, Observer)</span></span><br><span class="line">        viewModel.messageLiveData.observe(<span class="keyword">this</span>) &#123;</span><br><span class="line">            textView.text = it</span><br><span class="line">        &#125;</span><br><span class="line">        button.setOnClickListener &#123;</span><br><span class="line">            <span class="comment">// 触发数据获取操作</span></span><br><span class="line">            viewModel.getMessage()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="MediatorLiveData"><a href="#MediatorLiveData" class="headerlink" title="MediatorLiveData"></a>MediatorLiveData</h3><ul>
+<li><p>MediatorLiveData是MutableLiveData子类，它可以观察其他LiveData对象并对来自它们的OnChanged事件作出反应</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> livedata = MediatorLiveData&lt;String&gt;()</span><br><span class="line"><span class="comment">// childLivedata1: LiveData&lt;Int&gt;</span></span><br><span class="line">livedata.addSource(childLivedata1) &#123;</span><br><span class="line">	livedata.value = it.toString()</span><br><span class="line">    println(<span class="string">&quot;The livedata1 has changed !&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// childLivedata2: LiveData&lt;String&gt;</span></span><br><span class="line">livedata.addSource(childLivedata2) &#123;</span><br><span class="line">	livedata.value = <span class="string">&quot;Hi, <span class="variable">$it</span>.&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="私有化写入权限"><a href="#私有化写入权限" class="headerlink" title="私有化写入权限"></a>私有化写入权限</h3><ul>
+<li><p>通常我们不希望让MutableLiveData的setValue或postValue透露在ViewModel以外，我们可以定义一个字段将MutableLiveData <strong>向上转型</strong> 为LiveData，并仅允许外部通过该字段订阅：</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// viewmodel</span></span><br><span class="line"><span class="comment">// 我们通常令私有的livedata命名为 “_ + 公有的livedata命名” 的格式</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> _livedata = MutableLiveData&lt;String&gt;()</span><br><span class="line"><span class="keyword">val</span> livedata: LiveData&lt;String&gt; <span class="keyword">get</span>() = _livedata</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="LiveData-ktx"><a href="#LiveData-ktx" class="headerlink" title="LiveData-ktx"></a>LiveData-ktx</h3><p>LiveData-ktx 是官方为 LiveData 定义的一系列扩展方法，利用好它能提高开发效率</p>
+<h4 id="Flow-asLiveData"><a href="#Flow-asLiveData" class="headerlink" title="Flow.asLiveData"></a>Flow.asLiveData</h4><ul>
+<li>可以将Flow转换为LiveData</li>
+</ul>
+<h4 id="LiveData-Builder"><a href="#LiveData-Builder" class="headerlink" title="LiveData Builder"></a>LiveData Builder</h4><ul>
+<li><p>先看函数定义</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">liveData</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    context: <span class="type">CoroutineContext</span> = EmptyCoroutineContext,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="comment">// DEFAULT_TIMEOUT = 5000L</span></span></span></span><br><span class="line"><span class="params"><span class="function">    timeoutInMs: <span class="type">Long</span> = DEFAULT_TIMEOUT,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@BuilderInference</span> block: <span class="type">suspend</span> <span class="type">LiveDataScope</span>&lt;<span class="type">T</span>&gt;.() -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: LiveData&lt;T&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>[suspend] emit&lt;T&gt;(T)</code> 用于在block中提交新值</p>
+<p><code>[suspend] emitSource&lt;T&gt;(LiveData&lt;T&gt;): DisposableHandle</code> 用于在block中订阅其他LiveData</p>
+<p><code> latestValue: T?</code> 用于在block中获取最新提交的值</p>
+</blockquote>
+</li>
+<li><p>简单用例</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这里使用get即可实现延迟加载并且每次拿到的livedata都是不同实例</span></span><br><span class="line"><span class="comment">// 如果仅想要延迟加载并只存在一个实例使用by lazy即可</span></span><br><span class="line"><span class="keyword">val</span> livedata <span class="keyword">get</span>() = livedata &#123;</span><br><span class="line">    <span class="comment">// repeat(Int, (Int) -&gt; Unit)</span></span><br><span class="line">    <span class="comment">// 执行给定的函数动作指定的次数。当前迭代的从零开始的索引作为参数传递给操作</span></span><br><span class="line">    repeat(<span class="number">10</span>) &#123;</span><br><span class="line">        emit(it)</span><br><span class="line">        <span class="comment">// [suspend] delay(Long)</span></span><br><span class="line">        <span class="comment">// 将协程延迟给定时间而不阻塞线程，并在指定时间后恢复它</span></span><br><span class="line">        delay(<span class="number">1000</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// LiveData#observeForever(Observer&lt;T&gt;)</span></span><br><span class="line"><span class="comment">// 不需要提供LifecycleOwner即可订阅，同时也意味着只要数据发生改变回调就会执行</span></span><br><span class="line">livedata.observeForever(::println)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="Map-SwitchMap"><a href="#Map-SwitchMap" class="headerlink" title="Map &amp; SwitchMap"></a>Map &amp; SwitchMap</h4>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/01/13/2_reactive_programming/" data-id="clnhix49j0001myou62ptawbl" data-title="初探 Reactive Programming" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-1_using_retrofit" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/01/07/1_using_retrofit/" class="article-date">
+  <time class="dt-published" datetime="2023-01-07T02:51:23.000Z" itemprop="datePublished">2023-01-07</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2023/01/07/1_using_retrofit/">Retrofit</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><ul>
+<li><p><strong>Retrofit</strong> 是将 API 接口转换为可调用对象的工具。</p>
+</li>
+<li><p>本章用到的所有依赖如下</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit"> retrofit2 : retrofit </a></li>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson"> retrofit2 : converter-gson</a></li>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.google.code.gson/gson"> gson : gson</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="发送简单的-GET-请求"><a href="#发送简单的-GET-请求" class="headerlink" title="发送简单的 GET 请求"></a>发送简单的 GET 请求</h3><ul>
+<li><p>现有一个后端接口 <code>localhost:8080/test/currentTime</code>，请求后会返回当前时间（毫秒时，Long型）。</p>
+</li>
+<li><p>我们在项目根下新建<code>Contracts</code>单例类用于保存全局常量，并将公共请求前缀写入：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Contracts</span></span><br><span class="line"><span class="keyword">object</span> Contracts &#123;</span><br><span class="line">    <span class="comment">// 不要忘记在最后补上一个斜杠</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">val</span> BASE_URL = <span class="string">&quot;https://<span class="variable">$LOCAL_HOST</span>:<span class="variable">$PORT</span>/test/&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> LOCAL_HOST = <span class="string">&quot;192.168.18.3&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> PORT = <span class="string">&quot;8080&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在项目根目录下新建包<code>data.api</code>用于存放<code>Retrofit</code>接口，然后在该包下新建<code>TestApi</code>接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.TestApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">TestApi</span> &#123;</span><br><span class="line">    <span class="comment">// 在这里定义你的第一个请求</span></span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;currentTime&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">currentTime</span><span class="params">()</span></span>: Call&lt;<span class="built_in">Long</span>&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>@GET</code> 表明该请求是个GET请求，它接收参数 <code>value:String</code> 表示具体的请求地址</p>
+</blockquote>
+</li>
+<li><p>然后我们可以在当前接口的伴生类中使用 <code>Retrofit.Builder</code> 实例化一个默认的对象：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.TestApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">TestApi</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">        	.baseUrl(Contracts.BASE_URL)</span><br><span class="line">        	.build()</span><br><span class="line">        	.create(TestApi::<span class="keyword">class</span>.java)</span><br><span class="line">        	<span class="comment">//或者 &quot;.create&lt;TestApi&gt;()&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>现在我们在来测试这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TestActivity</span> : <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> testApi = TestApi.Default</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> button: Button</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> textView: TextView</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        button = findViewById&lt;Button&gt;(R.id.button)</span><br><span class="line">        textView = findViewById&lt;TextView&gt;(R.id.textView)</span><br><span class="line">        button.setOnClickListener &#123;</span><br><span class="line">            lifecycleScope.launch(Dispatcher.IO) &#123;</span><br><span class="line">                <span class="keyword">val</span> call = testApi.currentTime()</span><br><span class="line">                call.enqueue(<span class="keyword">object</span> : Callback&lt;<span class="built_in">Long</span>&gt; &#123;</span><br><span class="line">                    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">                        call: <span class="type">Call</span>&lt;<span class="type">Long</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">                        response: <span class="type">Response</span>&lt;<span class="type">Long</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">                    )</span></span> &#123;</span><br><span class="line">                        textView.text = <span class="string">&quot;<span class="subst">$&#123;response.body()&#125;</span>ms&quot;</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">Long</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">                        Log.e(TAG, <span class="string">&quot;onCreate&quot;</span>, t)</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="处理-API-接口返回的-JSON-数据"><a href="#处理-API-接口返回的-JSON-数据" class="headerlink" title="处理 API 接口返回的 JSON 数据"></a>处理 API 接口返回的 JSON 数据</h3><ul>
+<li><p>现有一个后端接口 <code>localhost:8080/test/user/random</code> ，请求后会以JSON格式返回随机用户简略信息，比如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;userId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;40019&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;李亮&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;lastOnlineAt&quot;</span><span class="punctuation">:</span> <span class="number">1651620000000</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>我们先定义一个<code>UserDTO</code>数据类：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.UserDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">UserDTO</span>(</span><br><span class="line">    <span class="meta">@SerializedName(<span class="string">&quot;userId&quot;</span>)</span> <span class="keyword">val</span> id: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> lastOnlineAt: <span class="built_in">Long</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>我们不需要将JSON的全部内容定义为字段，按需即可</p>
+</blockquote>
+</li>
+<li><p>在<code>UserApi</code>中定义该请求：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//data.api.UserApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">UserApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;user/random&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getRandomUser</span><span class="params">()</span></span>: User</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            <span class="comment">// 使用Gson转换器</span></span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create(UserApi::<span class="keyword">class</span>.java)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>后端返回的<code>lastOnlineAt</code>是我们当前不需要的，我们可以定义一个 <code>User</code> 数据类，然后为 <code>UserDTO</code> 定义一个扩展方法<code>toUser(): User</code> ：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// domain.entity.User</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">User</span>(</span><br><span class="line">    <span class="keyword">val</span> id: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> name: String</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.UserDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">UserDTO</span> (...)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> UserDTO.<span class="title">toUser</span><span class="params">()</span></span>: User = User(id, name)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>测试这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.TestActivity</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TestActivity</span> : <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        lifecycleScope.launch(Dispatcher.IO) &#123;</span><br><span class="line">            <span class="keyword">val</span> user = <span class="keyword">try</span> &#123;</span><br><span class="line">                userApi.getRandomUser().toUser()</span><br><span class="line">            &#125; <span class="keyword">catch</span> (e: Exception) &#123;</span><br><span class="line">                Log.e(TAG, <span class="string">&quot;onCreate:&quot;</span>, e)</span><br><span class="line">                <span class="literal">null</span></span><br><span class="line">            &#125;</span><br><span class="line">            withContext(Dispatcher.Main) &#123;</span><br><span class="line">                showUser(user)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@MainThread</span></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">deliverUser</span><span class="params">(user: <span class="type">User</span>?)</span></span> &#123;</span><br><span class="line">        textView.text = user?.name ?: <span class="string">&quot;Network Error.&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="使用-Path-和-Query-传入参数"><a href="#使用-Path-和-Query-传入参数" class="headerlink" title="使用 @Path 和 @Query 传入参数"></a>使用 @Path 和 @Query 传入参数</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/test/dog/&#123;count&#125;</code>，<code>count</code> 传入一个整数，后端会以GSON数组的格式随机返回狗狗的简略信息，例如当 <code>count</code> 为 <strong>2</strong> 时：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Kitty&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;age&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;sex&quot;</span><span class="punctuation">:</span> <span class="string">&quot;female&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Lucio&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;age&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;sex&quot;</span><span class="punctuation">:</span> <span class="string">&quot;male&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义数据类 <code>DogDTO</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.DogDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">DogDTO</span> (</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> age: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> sex: String</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义接口 <code>DogApi</code>，通过 <code>@Path</code> 注解实现动态请求：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.DogApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">DogApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;dog/&#123;count&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDogs</span><span class="params">(<span class="meta">@Path(<span class="string">&quot;count&quot;</span>)</span> count: <span class="type">Int</span> = <span class="number">1</span>)</span></span>: List&lt;DogDTO&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果API接口需要传入的参数包含<strong>键值对</strong>，如 <code>localhost:8080/test/dog/&#123;count&#125;?age=&#123;age&#125;&amp;sex=&#123;sex&#125;</code>，那么就需要用到<code>@Query</code>注解：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.DogApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">DogApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;dog/&#123;count&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDogs</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="string">&quot;count&quot;</span>)</span> count: <span class="type">Int</span> = <span class="number">1</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="string">&quot;age&quot;</span>)</span> age: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="string">&quot;sex&quot;</span>)</span> sex: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: List&lt;DogDTO&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="为请求添加请求头信息"><a href="#为请求添加请求头信息" class="headerlink" title="为请求添加请求头信息"></a>为请求添加请求头信息</h3><ul>
+<li><p>使用 <code>@Headers</code> 注解静态添加请求头信息</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Headers(</span></span><br><span class="line"><span class="meta">	<span class="string">&quot;X-RapidAPI-Host: <span class="subst">$&#123;Contracts.X_RapidAPI_Host&#125;</span>&quot;</span>,</span></span><br><span class="line"><span class="meta">	<span class="string">&quot;X-RapidAPI-Key: <span class="subst">$&#123;Contracts.X_RapidAPI_Key&#125;</span>&quot;</span></span></span><br><span class="line"><span class="meta">)</span></span><br><span class="line"><span class="meta">@GET(<span class="string">&quot;search/&#123;name&#125;&quot;</span>)</span></span><br><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">searchCards</span><span class="params">(<span class="meta">@Path(<span class="string">&quot;name&quot;</span>)</span> name: <span class="type">String</span>)</span></span>: List&lt;Card&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>@Header</code> 注解动态添加请求头信息</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GET(<span class="string">&quot;search/&#123;name&#125;&quot;</span>)</span></span><br><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">searchCards</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@Header(<span class="string">&quot;key&quot;</span>)</span> key: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@Path(<span class="string">&quot;name&quot;</span>)</span> name: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: List&lt;Card&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>OKHttpClient</code> 设置全局请求头信息</p>
+<ul>
+<li><p>实例化 <code>OKHttpClient</code> 为一个顶级变量：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> client = OkHttpClient.Builder()</span><br><span class="line">            .addInterceptor &#123;</span><br><span class="line">                <span class="keyword">val</span> request = it.request()</span><br><span class="line">                    .newBuilder()</span><br><span class="line">                	<span class="comment">// 在这里添加默认头信息</span></span><br><span class="line">                    .addHeader(<span class="string">&quot;X-RapidAPI-Host&quot;</span>, Contracts.X_RapidAPI_Host)</span><br><span class="line">                    .addHeader(<span class="string">&quot;X-RapidAPI-Key&quot;</span>, Contracts.X_RapidAPI_Key)</span><br><span class="line">                    .build()</span><br><span class="line">                it.proceed(request)</span><br><span class="line">            &#125;.build()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在每次构造 <code>Retrofit</code> 的时候设置其client为上面这个顶级变量即可：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Retrofit.Builder()</span><br><span class="line">	.baseUrl(Contracts.BASE_URL)</span><br><span class="line">	.client(client)</span><br><span class="line">	.build()</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h3 id="上传一个文件到云端"><a href="#上传一个文件到云端" class="headerlink" title="上传一个文件到云端"></a>上传一个文件到云端</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/upload</code> ，定义 <strong>FileUploadService</strong> 接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileUploadService</span> &#123;</span><br><span class="line">    <span class="meta">@Multipart</span></span><br><span class="line">    <span class="meta">@POST(<span class="string">&quot;upload&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">postFile</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Part(<span class="string">&quot;file\&quot;; filename=\&quot;photo.jpg\&quot; &quot;</span>)</span> file: <span class="type">RequestBody</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;String&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create&lt;FileUploadService&gt;()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调用这个接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> requestBody = RequestBody.create(MediaType.parse(<span class="string">&quot;image/jpeg&quot;</span>), photoFile)</span><br><span class="line">service.postFile(requestBody).enqueue(<span class="keyword">object</span> : Callback&lt;String&gt; &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        response: <span class="type">Response</span>&lt;<span class="type">String</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="comment">// 更新成功信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">        Log.e(TAG, <span class="string">&quot;postFile&quot;</span>, t)</span><br><span class="line">        <span class="comment">// 更新错误信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="上传多个文件到云端"><a href="#上传多个文件到云端" class="headerlink" title="上传多个文件到云端"></a>上传多个文件到云端</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/upload/files</code> ，定义 <strong>FileUploadService</strong> 接口</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileUploadService</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="meta">@Multipart</span></span><br><span class="line">    <span class="meta">@POST(<span class="string">&quot;upload/files&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">postFiles</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@PartMap</span> Map&lt;String, RequestBody&gt; files,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Part(<span class="string">&quot;json&quot;</span>)</span> String description</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;String&gt;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>构建一个 <code>String</code> 映射到 <code>RequestBody</code> 的 <code>MutableMap</code> 用于存放多个文件：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> files = mutableMapOf&lt;String, RequestBody&gt;()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将每个 <code>Uri</code> 分别构建为 <code>RequestBody</code>，然后同文件名映射到 <strong>files</strong> 中：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">uris.map(::File).forEach &#123;</span><br><span class="line">    <span class="keyword">val</span> requestBody = it.asRequestBody(<span class="string">&quot;multipart/form-data&quot;</span>.toMediaType())</span><br><span class="line">    <span class="keyword">val</span> fileName = it.name</span><br><span class="line">    files.put(fileName, requestBody)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>随后调用接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">  service.postFiles(files, <span class="string">&quot;string request&quot;</span>).enqueue(<span class="keyword">object</span> : Callback&lt;String&gt; &#123;</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    	call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        response: <span class="type">Response</span>&lt;<span class="type">String</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="comment">// 更新成功信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">        Log.e(TAG, <span class="string">&quot;postFile&quot;</span>, t)</span><br><span class="line">        <span class="comment">// 更新错误信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="从云端下载文件"><a href="#从云端下载文件" class="headerlink" title="从云端下载文件"></a>从云端下载文件</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/test/download/&#123;fileName&#125;</code> ，根据 <strong>fileName</strong> 的值返回对应文件，定义 <strong>FileDownloadService</strong> 接口</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileDownloadService</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;download/&#123;filename&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">downloadByFileName</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="string">&quot;fileName&quot;</span>)</span> fileName: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;ResponseBody&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create&lt;FileDownloadService&gt;()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调用这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">service.downloadByFileName(<span class="string">&quot;1.png&quot;</span>).enqueue(<span class="keyword">object</span> : Callback&lt;ResponseBody&gt; &#123;</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">		call: <span class="type">Call</span>&lt;<span class="type">ResponseBody</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">		response: <span class="type">Response</span>&lt;<span class="type">ResponseBody</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">	)</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (response.isSuccessful()) &#123;</span><br><span class="line">			<span class="keyword">val</span> body = response.body()</span><br><span class="line">            <span class="comment">// 用你的方法将body写入磁盘 </span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">ResponseBody</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">		Log.e(TAG, <span class="string">&quot;downloadByFileName&quot;</span>, t)</span><br><span class="line">		<span class="comment">// 更新错误信息到UI</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/01/07/1_using_retrofit/" data-id="clnhix49e0000myouhlf42cpu" data-title="Retrofit" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/" rel="tag">android</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+          </li>
+        
+          <li>
+            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

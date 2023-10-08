@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>初探 Reactive Programming | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="概览 本章将介绍响应式编程并讲解 LiveData 和 Flow 组件的原理以及使用  生产者 - 消费者 通常负责从本地数据库或远程数据库获取数据的组件我们称之为生产者，而使用数据并进行“展示”等操作的组件我们称之为消费者 在传统的架构模式下，我们总是习惯于在我们需要的时候通知生产者进行生产数据，利用接口回调的方式，处理数据然后将结果用于消费者的消费行为 不过，这种传统的“生产-消费”模式往往会">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初探 Reactive Programming">
+<meta property="og:url" content="http://example.com/2023/01/13/2_reactive_programming/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="概览 本章将介绍响应式编程并讲解 LiveData 和 Flow 组件的原理以及使用  生产者 - 消费者 通常负责从本地数据库或远程数据库获取数据的组件我们称之为生产者，而使用数据并进行“展示”等操作的组件我们称之为消费者 在传统的架构模式下，我们总是习惯于在我们需要的时候通知生产者进行生产数据，利用接口回调的方式，处理数据然后将结果用于消费者的消费行为 不过，这种传统的“生产-消费”模式往往会">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-01-13T15:01:55.000Z">
+<meta property="article:modified_time" content="2023-10-08T13:52:15.840Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="kotlin">
+<meta property="article:tag" content="flow">
+<meta property="article:tag" content="livedata">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-2_reactive_programming" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/01/13/2_reactive_programming/" class="article-date">
+  <time class="dt-published" datetime="2023-01-13T15:01:55.000Z" itemprop="datePublished">2023-01-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      初探 Reactive Programming
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><ul>
+<li>本章将介绍响应式编程并讲解 <strong>LiveData</strong> 和 <strong>Flow</strong> 组件的原理以及使用</li>
+</ul>
+<h3 id="生产者-消费者"><a href="#生产者-消费者" class="headerlink" title="生产者 - 消费者"></a>生产者 - 消费者</h3><ul>
+<li>通常负责从本地数据库或远程数据库获取数据的组件我们称之为<strong>生产者</strong>，而使用数据并进行“展示”等操作的组件我们称之为<strong>消费者</strong></li>
+<li>在传统的架构模式下，我们总是习惯于在我们需要的时候通知生产者进行<strong>生产</strong>数据，利用接口回调的方式，处理数据然后将结果用于消费者的<strong>消费</strong>行为</li>
+<li>不过，这种传统的“生产-消费”模式往往会将<strong>数据操作</strong>、<strong>逻辑操作</strong>以及<strong>UI操作</strong>耦合，当项目变得稍微庞大一些，或者想要修改陈旧代码的时候往往会变得十分困难，甚至在不同数据需要互相组合调用的时候更容易写出BUG</li>
+</ul>
+<h3 id="什么是响应式编程"><a href="#什么是响应式编程" class="headerlink" title="什么是响应式编程"></a>什么是响应式编程</h3><ul>
+<li>响应式编程巧妙地解决了上面的问题，我们通过在 生产者 - 消费者 当中添加一个“中介”负责管理数据的存储与分发，我们称这个中介为 <strong>可观察数据</strong> 或 <strong>响应式数据</strong></li>
+<li>生产者生产的数据可以存放到这个可观察数据中，消费者可以通过<strong>观察者</strong>订阅这个可观察数据，生产者&#x2F;消费者 与可观察数据的关系是多对多的，每当因生产者生产行为导致可观察数据的值改变，可观察数据（通常情况下）会立即通知所有订阅他的观察者以便消费者进行消费</li>
+</ul>
+<h3 id="LifecycleOwner"><a href="#LifecycleOwner" class="headerlink" title="LifecycleOwner"></a>LifecycleOwner</h3><ul>
+<li>LifecycleOwner是一个接口，通过 <code>LifecycleOwner#getLifecycle(): Lifecycle</code> ，可以获取到Lifecycle对象</li>
+<li>Lifecycle是定义一个具有 Android 生命周期的对象，通过<code>Lifecycle#getCurrentState(): State</code>，可以获取到当前生命周期的状态，如 <strong>ON_CREATE</strong>，<strong>ON_START</strong> 等</li>
+</ul>
+<h3 id="Observer"><a href="#Observer" class="headerlink" title="Observer"></a>Observer</h3><ul>
+<li>Observer是一个 <strong>SAM接口</strong> ，是可以从 LiveData 接收数据的简单回调 <code>Observer#onChange(T)</code></li>
+</ul>
+<h3 id="LiveData"><a href="#LiveData" class="headerlink" title="LiveData"></a>LiveData</h3><ul>
+<li><p>LiveData 是一个可以在给定生命周期内观察到的数据持有者类。这意味着Observer可以与LifecycleOwner成对添加，并且只有当配对的 LifecycleOwner 处于活动状态时，才会通知该Observer数据发生的变化</p>
+</li>
+<li><p>在Android中，<strong>ComponentActivity</strong> 以及 <strong>Fragment</strong> 都已默认实现了LifecycleOwner接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.source.MessageDataSource (生产者)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageDataSource</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getMessage</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">return</span> mockApi.getMessage()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.MessageViewModel (存放可观察数据)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageViewModel</span>(</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">val</span> dataSource: MessageDataSource</span><br><span class="line">): ViewModel() &#123;</span><br><span class="line">    <span class="comment">// MutableLiveData是LiveData的子类，其拥有改变其持有数据的APIs</span></span><br><span class="line">    <span class="keyword">val</span> messageLiveData = MutableLiveData&lt;String&gt;()</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getMessge</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 同步方式改变其持有数据：MutableLiveData&lt;T&gt;#setValue(T)</span></span><br><span class="line">        <span class="comment">// 异步方式改变其持有数据：MutableLiveData&lt;T&gt;#postValue(T)</span></span><br><span class="line">        messageLiveData.value = dataSource.getMessage()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.MessageActivity (消费者)</span></span><br><span class="line"><span class="comment">// AppCompatActivity是ComponentActivity的子类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageActivity</span>: <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="comment">// ComponentActivity#viewModels((() -&gt; Factory)): Lazy&lt;VM&gt;</span></span><br><span class="line">    <span class="comment">// 返回一个 Lazy 委托以访问 ComponentActivity 的 ViewModel</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> viewModel <span class="keyword">by</span> viewModels&lt;MessageViewModel&gt;()</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> textView: TextView</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> button: Button</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 订阅此数据：LiveData#observe(LifecycleOwener, Observer)</span></span><br><span class="line">        viewModel.messageLiveData.observe(<span class="keyword">this</span>) &#123;</span><br><span class="line">            textView.text = it</span><br><span class="line">        &#125;</span><br><span class="line">        button.setOnClickListener &#123;</span><br><span class="line">            <span class="comment">// 触发数据获取操作</span></span><br><span class="line">            viewModel.getMessage()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="MediatorLiveData"><a href="#MediatorLiveData" class="headerlink" title="MediatorLiveData"></a>MediatorLiveData</h3><ul>
+<li><p>MediatorLiveData是MutableLiveData子类，它可以观察其他LiveData对象并对来自它们的OnChanged事件作出反应</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> livedata = MediatorLiveData&lt;String&gt;()</span><br><span class="line"><span class="comment">// childLivedata1: LiveData&lt;Int&gt;</span></span><br><span class="line">livedata.addSource(childLivedata1) &#123;</span><br><span class="line">	livedata.value = it.toString()</span><br><span class="line">    println(<span class="string">&quot;The livedata1 has changed !&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// childLivedata2: LiveData&lt;String&gt;</span></span><br><span class="line">livedata.addSource(childLivedata2) &#123;</span><br><span class="line">	livedata.value = <span class="string">&quot;Hi, <span class="variable">$it</span>.&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="私有化写入权限"><a href="#私有化写入权限" class="headerlink" title="私有化写入权限"></a>私有化写入权限</h3><ul>
+<li><p>通常我们不希望让MutableLiveData的setValue或postValue透露在ViewModel以外，我们可以定义一个字段将MutableLiveData <strong>向上转型</strong> 为LiveData，并仅允许外部通过该字段订阅：</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// viewmodel</span></span><br><span class="line"><span class="comment">// 我们通常令私有的livedata命名为 “_ + 公有的livedata命名” 的格式</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> _livedata = MutableLiveData&lt;String&gt;()</span><br><span class="line"><span class="keyword">val</span> livedata: LiveData&lt;String&gt; <span class="keyword">get</span>() = _livedata</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="LiveData-ktx"><a href="#LiveData-ktx" class="headerlink" title="LiveData-ktx"></a>LiveData-ktx</h3><p>LiveData-ktx 是官方为 LiveData 定义的一系列扩展方法，利用好它能提高开发效率</p>
+<h4 id="Flow-asLiveData"><a href="#Flow-asLiveData" class="headerlink" title="Flow.asLiveData"></a>Flow.asLiveData</h4><ul>
+<li>可以将Flow转换为LiveData</li>
+</ul>
+<h4 id="LiveData-Builder"><a href="#LiveData-Builder" class="headerlink" title="LiveData Builder"></a>LiveData Builder</h4><ul>
+<li><p>先看函数定义</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">liveData</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    context: <span class="type">CoroutineContext</span> = EmptyCoroutineContext,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="comment">// DEFAULT_TIMEOUT = 5000L</span></span></span></span><br><span class="line"><span class="params"><span class="function">    timeoutInMs: <span class="type">Long</span> = DEFAULT_TIMEOUT,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@BuilderInference</span> block: <span class="type">suspend</span> <span class="type">LiveDataScope</span>&lt;<span class="type">T</span>&gt;.() -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: LiveData&lt;T&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>[suspend] emit&lt;T&gt;(T)</code> 用于在block中提交新值</p>
+<p><code>[suspend] emitSource&lt;T&gt;(LiveData&lt;T&gt;): DisposableHandle</code> 用于在block中订阅其他LiveData</p>
+<p><code> latestValue: T?</code> 用于在block中获取最新提交的值</p>
+</blockquote>
+</li>
+<li><p>简单用例</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这里使用get即可实现延迟加载并且每次拿到的livedata都是不同实例</span></span><br><span class="line"><span class="comment">// 如果仅想要延迟加载并只存在一个实例使用by lazy即可</span></span><br><span class="line"><span class="keyword">val</span> livedata <span class="keyword">get</span>() = livedata &#123;</span><br><span class="line">    <span class="comment">// repeat(Int, (Int) -&gt; Unit)</span></span><br><span class="line">    <span class="comment">// 执行给定的函数动作指定的次数。当前迭代的从零开始的索引作为参数传递给操作</span></span><br><span class="line">    repeat(<span class="number">10</span>) &#123;</span><br><span class="line">        emit(it)</span><br><span class="line">        <span class="comment">// [suspend] delay(Long)</span></span><br><span class="line">        <span class="comment">// 将协程延迟给定时间而不阻塞线程，并在指定时间后恢复它</span></span><br><span class="line">        delay(<span class="number">1000</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// LiveData#observeForever(Observer&lt;T&gt;)</span></span><br><span class="line"><span class="comment">// 不需要提供LifecycleOwner即可订阅，同时也意味着只要数据发生改变回调就会执行</span></span><br><span class="line">livedata.observeForever(::println)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="Map-SwitchMap"><a href="#Map-SwitchMap" class="headerlink" title="Map &amp; SwitchMap"></a>Map &amp; SwitchMap</h4>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/01/13/2_reactive_programming/" data-id="clnhix49j0001myou62ptawbl" data-title="初探 Reactive Programming" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/01/13/3_kotlin_lambda/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Kotlin Lambda
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2023/01/07/1_using_retrofit/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Retrofit</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+          </li>
+        
+          <li>
+            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

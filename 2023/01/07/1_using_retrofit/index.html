@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Retrofit | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="概览 Retrofit 是将 API 接口转换为可调用对象的工具。  本章用到的所有依赖如下   retrofit2 : retrofit   retrofit2 : converter-gson  gson : gson    发送简单的 GET 请求 现有一个后端接口 localhost:8080&#x2F;test&#x2F;currentTime，请求后会返回当前时间（毫秒时，Long型）。  我们在项目根下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Retrofit">
+<meta property="og:url" content="http://example.com/2023/01/07/1_using_retrofit/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="概览 Retrofit 是将 API 接口转换为可调用对象的工具。  本章用到的所有依赖如下   retrofit2 : retrofit   retrofit2 : converter-gson  gson : gson    发送简单的 GET 请求 现有一个后端接口 localhost:8080&#x2F;test&#x2F;currentTime，请求后会返回当前时间（毫秒时，Long型）。  我们在项目根下">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-01-07T02:51:23.000Z">
+<meta property="article:modified_time" content="2023-10-08T13:52:15.840Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="android">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-1_using_retrofit" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/01/07/1_using_retrofit/" class="article-date">
+  <time class="dt-published" datetime="2023-01-07T02:51:23.000Z" itemprop="datePublished">2023-01-07</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Retrofit
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><ul>
+<li><p><strong>Retrofit</strong> 是将 API 接口转换为可调用对象的工具。</p>
+</li>
+<li><p>本章用到的所有依赖如下</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit"> retrofit2 : retrofit </a></li>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson"> retrofit2 : converter-gson</a></li>
+<li><a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/com.google.code.gson/gson"> gson : gson</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="发送简单的-GET-请求"><a href="#发送简单的-GET-请求" class="headerlink" title="发送简单的 GET 请求"></a>发送简单的 GET 请求</h3><ul>
+<li><p>现有一个后端接口 <code>localhost:8080/test/currentTime</code>，请求后会返回当前时间（毫秒时，Long型）。</p>
+</li>
+<li><p>我们在项目根下新建<code>Contracts</code>单例类用于保存全局常量，并将公共请求前缀写入：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Contracts</span></span><br><span class="line"><span class="keyword">object</span> Contracts &#123;</span><br><span class="line">    <span class="comment">// 不要忘记在最后补上一个斜杠</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">val</span> BASE_URL = <span class="string">&quot;https://<span class="variable">$LOCAL_HOST</span>:<span class="variable">$PORT</span>/test/&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> LOCAL_HOST = <span class="string">&quot;192.168.18.3&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> PORT = <span class="string">&quot;8080&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在项目根目录下新建包<code>data.api</code>用于存放<code>Retrofit</code>接口，然后在该包下新建<code>TestApi</code>接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.TestApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">TestApi</span> &#123;</span><br><span class="line">    <span class="comment">// 在这里定义你的第一个请求</span></span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;currentTime&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">currentTime</span><span class="params">()</span></span>: Call&lt;<span class="built_in">Long</span>&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>@GET</code> 表明该请求是个GET请求，它接收参数 <code>value:String</code> 表示具体的请求地址</p>
+</blockquote>
+</li>
+<li><p>然后我们可以在当前接口的伴生类中使用 <code>Retrofit.Builder</code> 实例化一个默认的对象：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.TestApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">TestApi</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">        	.baseUrl(Contracts.BASE_URL)</span><br><span class="line">        	.build()</span><br><span class="line">        	.create(TestApi::<span class="keyword">class</span>.java)</span><br><span class="line">        	<span class="comment">//或者 &quot;.create&lt;TestApi&gt;()&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>现在我们在来测试这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TestActivity</span> : <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> testApi = TestApi.Default</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> button: Button</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> textView: TextView</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        button = findViewById&lt;Button&gt;(R.id.button)</span><br><span class="line">        textView = findViewById&lt;TextView&gt;(R.id.textView)</span><br><span class="line">        button.setOnClickListener &#123;</span><br><span class="line">            lifecycleScope.launch(Dispatcher.IO) &#123;</span><br><span class="line">                <span class="keyword">val</span> call = testApi.currentTime()</span><br><span class="line">                call.enqueue(<span class="keyword">object</span> : Callback&lt;<span class="built_in">Long</span>&gt; &#123;</span><br><span class="line">                    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">                        call: <span class="type">Call</span>&lt;<span class="type">Long</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">                        response: <span class="type">Response</span>&lt;<span class="type">Long</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">                    )</span></span> &#123;</span><br><span class="line">                        textView.text = <span class="string">&quot;<span class="subst">$&#123;response.body()&#125;</span>ms&quot;</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">Long</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">                        Log.e(TAG, <span class="string">&quot;onCreate&quot;</span>, t)</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="处理-API-接口返回的-JSON-数据"><a href="#处理-API-接口返回的-JSON-数据" class="headerlink" title="处理 API 接口返回的 JSON 数据"></a>处理 API 接口返回的 JSON 数据</h3><ul>
+<li><p>现有一个后端接口 <code>localhost:8080/test/user/random</code> ，请求后会以JSON格式返回随机用户简略信息，比如：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;userId&quot;</span><span class="punctuation">:</span> <span class="string">&quot;40019&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;李亮&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;lastOnlineAt&quot;</span><span class="punctuation">:</span> <span class="number">1651620000000</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>我们先定义一个<code>UserDTO</code>数据类：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.UserDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">UserDTO</span>(</span><br><span class="line">    <span class="meta">@SerializedName(<span class="string">&quot;userId&quot;</span>)</span> <span class="keyword">val</span> id: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> lastOnlineAt: <span class="built_in">Long</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>我们不需要将JSON的全部内容定义为字段，按需即可</p>
+</blockquote>
+</li>
+<li><p>在<code>UserApi</code>中定义该请求：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//data.api.UserApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">UserApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;user/random&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getRandomUser</span><span class="params">()</span></span>: User</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            <span class="comment">// 使用Gson转换器</span></span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create(UserApi::<span class="keyword">class</span>.java)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>后端返回的<code>lastOnlineAt</code>是我们当前不需要的，我们可以定义一个 <code>User</code> 数据类，然后为 <code>UserDTO</code> 定义一个扩展方法<code>toUser(): User</code> ：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// domain.entity.User</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">User</span>(</span><br><span class="line">    <span class="keyword">val</span> id: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> name: String</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.UserDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">UserDTO</span> (...)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> UserDTO.<span class="title">toUser</span><span class="params">()</span></span>: User = User(id, name)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>测试这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ui.TestActivity</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TestActivity</span> : <span class="type">AppCompatActivity</span>() &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        lifecycleScope.launch(Dispatcher.IO) &#123;</span><br><span class="line">            <span class="keyword">val</span> user = <span class="keyword">try</span> &#123;</span><br><span class="line">                userApi.getRandomUser().toUser()</span><br><span class="line">            &#125; <span class="keyword">catch</span> (e: Exception) &#123;</span><br><span class="line">                Log.e(TAG, <span class="string">&quot;onCreate:&quot;</span>, e)</span><br><span class="line">                <span class="literal">null</span></span><br><span class="line">            &#125;</span><br><span class="line">            withContext(Dispatcher.Main) &#123;</span><br><span class="line">                showUser(user)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@MainThread</span></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">deliverUser</span><span class="params">(user: <span class="type">User</span>?)</span></span> &#123;</span><br><span class="line">        textView.text = user?.name ?: <span class="string">&quot;Network Error.&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="使用-Path-和-Query-传入参数"><a href="#使用-Path-和-Query-传入参数" class="headerlink" title="使用 @Path 和 @Query 传入参数"></a>使用 @Path 和 @Query 传入参数</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/test/dog/&#123;count&#125;</code>，<code>count</code> 传入一个整数，后端会以GSON数组的格式随机返回狗狗的简略信息，例如当 <code>count</code> 为 <strong>2</strong> 时：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Kitty&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;age&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;sex&quot;</span><span class="punctuation">:</span> <span class="string">&quot;female&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Lucio&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;age&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;sex&quot;</span><span class="punctuation">:</span> <span class="string">&quot;male&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义数据类 <code>DogDTO</code></p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.dto.DogDTO</span></span><br><span class="line"><span class="keyword">data</span> <span class="keyword">class</span> <span class="title class_">DogDTO</span> (</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> age: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> sex: String</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义接口 <code>DogApi</code>，通过 <code>@Path</code> 注解实现动态请求：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.DogApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">DogApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;dog/&#123;count&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDogs</span><span class="params">(<span class="meta">@Path(<span class="string">&quot;count&quot;</span>)</span> count: <span class="type">Int</span> = <span class="number">1</span>)</span></span>: List&lt;DogDTO&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果API接口需要传入的参数包含<strong>键值对</strong>，如 <code>localhost:8080/test/dog/&#123;count&#125;?age=&#123;age&#125;&amp;sex=&#123;sex&#125;</code>，那么就需要用到<code>@Query</code>注解：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// data.api.DogApi</span></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">DogApi</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;dog/&#123;count&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDogs</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="string">&quot;count&quot;</span>)</span> count: <span class="type">Int</span> = <span class="number">1</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="string">&quot;age&quot;</span>)</span> age: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="string">&quot;sex&quot;</span>)</span> sex: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: List&lt;DogDTO&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="为请求添加请求头信息"><a href="#为请求添加请求头信息" class="headerlink" title="为请求添加请求头信息"></a>为请求添加请求头信息</h3><ul>
+<li><p>使用 <code>@Headers</code> 注解静态添加请求头信息</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Headers(</span></span><br><span class="line"><span class="meta">	<span class="string">&quot;X-RapidAPI-Host: <span class="subst">$&#123;Contracts.X_RapidAPI_Host&#125;</span>&quot;</span>,</span></span><br><span class="line"><span class="meta">	<span class="string">&quot;X-RapidAPI-Key: <span class="subst">$&#123;Contracts.X_RapidAPI_Key&#125;</span>&quot;</span></span></span><br><span class="line"><span class="meta">)</span></span><br><span class="line"><span class="meta">@GET(<span class="string">&quot;search/&#123;name&#125;&quot;</span>)</span></span><br><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">searchCards</span><span class="params">(<span class="meta">@Path(<span class="string">&quot;name&quot;</span>)</span> name: <span class="type">String</span>)</span></span>: List&lt;Card&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>@Header</code> 注解动态添加请求头信息</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@GET(<span class="string">&quot;search/&#123;name&#125;&quot;</span>)</span></span><br><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">searchCards</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@Header(<span class="string">&quot;key&quot;</span>)</span> key: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@Path(<span class="string">&quot;name&quot;</span>)</span> name: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: List&lt;Card&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>OKHttpClient</code> 设置全局请求头信息</p>
+<ul>
+<li><p>实例化 <code>OKHttpClient</code> 为一个顶级变量：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> client = OkHttpClient.Builder()</span><br><span class="line">            .addInterceptor &#123;</span><br><span class="line">                <span class="keyword">val</span> request = it.request()</span><br><span class="line">                    .newBuilder()</span><br><span class="line">                	<span class="comment">// 在这里添加默认头信息</span></span><br><span class="line">                    .addHeader(<span class="string">&quot;X-RapidAPI-Host&quot;</span>, Contracts.X_RapidAPI_Host)</span><br><span class="line">                    .addHeader(<span class="string">&quot;X-RapidAPI-Key&quot;</span>, Contracts.X_RapidAPI_Key)</span><br><span class="line">                    .build()</span><br><span class="line">                it.proceed(request)</span><br><span class="line">            &#125;.build()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在每次构造 <code>Retrofit</code> 的时候设置其client为上面这个顶级变量即可：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Retrofit.Builder()</span><br><span class="line">	.baseUrl(Contracts.BASE_URL)</span><br><span class="line">	.client(client)</span><br><span class="line">	.build()</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h3 id="上传一个文件到云端"><a href="#上传一个文件到云端" class="headerlink" title="上传一个文件到云端"></a>上传一个文件到云端</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/upload</code> ，定义 <strong>FileUploadService</strong> 接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileUploadService</span> &#123;</span><br><span class="line">    <span class="meta">@Multipart</span></span><br><span class="line">    <span class="meta">@POST(<span class="string">&quot;upload&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">postFile</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Part(<span class="string">&quot;file\&quot;; filename=\&quot;photo.jpg\&quot; &quot;</span>)</span> file: <span class="type">RequestBody</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;String&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create&lt;FileUploadService&gt;()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调用这个接口</p>
+  <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> requestBody = RequestBody.create(MediaType.parse(<span class="string">&quot;image/jpeg&quot;</span>), photoFile)</span><br><span class="line">service.postFile(requestBody).enqueue(<span class="keyword">object</span> : Callback&lt;String&gt; &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        response: <span class="type">Response</span>&lt;<span class="type">String</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="comment">// 更新成功信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">        Log.e(TAG, <span class="string">&quot;postFile&quot;</span>, t)</span><br><span class="line">        <span class="comment">// 更新错误信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="上传多个文件到云端"><a href="#上传多个文件到云端" class="headerlink" title="上传多个文件到云端"></a>上传多个文件到云端</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/upload/files</code> ，定义 <strong>FileUploadService</strong> 接口</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileUploadService</span> &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="meta">@Multipart</span></span><br><span class="line">    <span class="meta">@POST(<span class="string">&quot;upload/files&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">postFiles</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@PartMap</span> Map&lt;String, RequestBody&gt; files,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Part(<span class="string">&quot;json&quot;</span>)</span> String description</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;String&gt;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>构建一个 <code>String</code> 映射到 <code>RequestBody</code> 的 <code>MutableMap</code> 用于存放多个文件：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> files = mutableMapOf&lt;String, RequestBody&gt;()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将每个 <code>Uri</code> 分别构建为 <code>RequestBody</code>，然后同文件名映射到 <strong>files</strong> 中：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">uris.map(::File).forEach &#123;</span><br><span class="line">    <span class="keyword">val</span> requestBody = it.asRequestBody(<span class="string">&quot;multipart/form-data&quot;</span>.toMediaType())</span><br><span class="line">    <span class="keyword">val</span> fileName = it.name</span><br><span class="line">    files.put(fileName, requestBody)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+<li><p>随后调用接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">  service.postFiles(files, <span class="string">&quot;string request&quot;</span>).enqueue(<span class="keyword">object</span> : Callback&lt;String&gt; &#123;</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    	call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        response: <span class="type">Response</span>&lt;<span class="type">String</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="comment">// 更新成功信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">String</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">        Log.e(TAG, <span class="string">&quot;postFile&quot;</span>, t)</span><br><span class="line">        <span class="comment">// 更新错误信息到UI</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="从云端下载文件"><a href="#从云端下载文件" class="headerlink" title="从云端下载文件"></a>从云端下载文件</h3><ul>
+<li><p>现有一个API接口 <code>localhost:8080/test/download/&#123;fileName&#125;</code> ，根据 <strong>fileName</strong> 的值返回对应文件，定义 <strong>FileDownloadService</strong> 接口</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">FileDownloadService</span> &#123;</span><br><span class="line">    <span class="meta">@GET(<span class="string">&quot;download/&#123;filename&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">downloadByFileName</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="string">&quot;fileName&quot;</span>)</span> fileName: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: Call&lt;ResponseBody&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> Default = Retrofit.Builder()</span><br><span class="line">            .baseUrl(Contracts.BASE_URL)</span><br><span class="line">            .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">            .build()</span><br><span class="line">            .create&lt;FileDownloadService&gt;()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调用这个接口：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">service.downloadByFileName(<span class="string">&quot;1.png&quot;</span>).enqueue(<span class="keyword">object</span> : Callback&lt;ResponseBody&gt; &#123;</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onResponse</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">		call: <span class="type">Call</span>&lt;<span class="type">ResponseBody</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">		response: <span class="type">Response</span>&lt;<span class="type">ResponseBody</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">	)</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (response.isSuccessful()) &#123;</span><br><span class="line">			<span class="keyword">val</span> body = response.body()</span><br><span class="line">            <span class="comment">// 用你的方法将body写入磁盘 </span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onFailure</span><span class="params">(call: <span class="type">Call</span>&lt;<span class="type">ResponseBody</span>&gt;, t: <span class="type">Throwable</span>)</span></span> &#123;</span><br><span class="line">		Log.e(TAG, <span class="string">&quot;downloadByFileName&quot;</span>, t)</span><br><span class="line">		<span class="comment">// 更新错误信息到UI</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/01/07/1_using_retrofit/" data-id="clnhix49e0000myouhlf42cpu" data-title="Retrofit" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/android/" rel="tag">android</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2023/01/13/2_reactive_programming/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          初探 Reactive Programming
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+          </li>
+        
+          <li>
+            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

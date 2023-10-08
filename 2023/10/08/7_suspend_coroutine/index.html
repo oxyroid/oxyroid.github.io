@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Kotlin Coroutine 挂起本质 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="suspendCoroutine { con -&gt; … } 会先生成一个SafeContinuation对象，然后将其传入block，即 “{ con -&gt; … } ”。 换句话说这个block内部的参数con 实际上就是这个传入的SafeContinuation对象，即在其中调用con.resumeWith本质上就是调用SafeContinuation.resumeWith。 最后s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kotlin Coroutine 挂起本质">
+<meta property="og:url" content="http://example.com/2023/10/08/7_suspend_coroutine/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="suspendCoroutine { con -&gt; … } 会先生成一个SafeContinuation对象，然后将其传入block，即 “{ con -&gt; … } ”。 换句话说这个block内部的参数con 实际上就是这个传入的SafeContinuation对象，即在其中调用con.resumeWith本质上就是调用SafeContinuation.resumeWith。 最后s">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-08T16:22:02.000Z">
+<meta property="article:modified_time" content="2023-10-08T13:52:15.844Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="kotlin">
+<meta property="article:tag" content="coroutine">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-7_suspend_coroutine" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2023/10/08/7_suspend_coroutine/" class="article-date">
+  <time class="dt-published" datetime="2023-10-08T16:22:02.000Z" itemprop="datePublished">2023-10-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Kotlin Coroutine 挂起本质
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>suspendCoroutine { con -&gt; … } 会先生成一个SafeContinuation对象，然后将其传入block，即 “{ con -&gt; … } ”。</p>
+<p>换句话说这个block内部的参数con 实际上就是这个<br>传入的SafeContinuation对象，即在其中调用con.resumeWith本质上就是调用SafeContinuation.resumeWith。</p>
+<p>最后suspendCoroutine会调用SafeContinuation对象的getOrThrow作为返回值返回给suspendCoroutineUninterceptedOrReturn，进而返回出去。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">suspend</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">suspendCoroutine</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="keyword">crossinline</span> block: (<span class="type">Continuation</span>&lt;<span class="type">T</span>&gt;) -&gt; <span class="type">Unit</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span>: T &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// 注意，suspendCoroutineUninterceptedOrReturn 的 block 的返回值是 Any?</span></span><br><span class="line">    <span class="keyword">return</span> suspendCoroutineUninterceptedOrReturn &#123; c: Continuation&lt;T&gt; -&gt;</span><br><span class="line">        <span class="comment">// 注意，这里调用的SafeContinuation的次构造函数</span></span><br><span class="line">        <span class="keyword">val</span> safe = SafeContinuation(c.intercepted())</span><br><span class="line">        block(safe)</span><br><span class="line">        safe.getOrThrow()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来我们看一下SafeContinuation的大致结构：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">class</span> <span class="title class_">SafeContinuation</span>&lt;<span class="type">in T</span>&gt;</span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">constructor</span>(</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> delegate: Continuation&lt;T&gt;,</span><br><span class="line">    initialResult: Any?</span><br><span class="line">) : Continuation&lt;T&gt;, CoroutineStackFrame &#123;</span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">actual</span> <span class="keyword">constructor</span>(delegate: Continuation&lt;T&gt;) : <span class="keyword">this</span>(delegate, UNDECIDED)</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Volatile</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> result: Any? = initialResult</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line">        <span class="meta">@Suppress(<span class="string">&quot;UNCHECKED_CAST&quot;</span>)</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">val</span> RESULT = AtomicReferenceFieldUpdater.newUpdater&lt;SafeContinuation&lt;*&gt;, Any?&gt;(</span><br><span class="line">            SafeContinuation::<span class="keyword">class</span>.java, Any::<span class="keyword">class</span>.java <span class="keyword">as</span> Class&lt;Any?&gt;, <span class="string">&quot;result&quot;</span></span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">actual</span> <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">resumeWith</span><span class="params">(result: <span class="type">Result</span>&lt;<span class="type">T</span>&gt;)</span></span> = ...</span><br><span class="line"></span><br><span class="line">    <span class="keyword">internal</span> <span class="keyword">actual</span> <span class="function"><span class="keyword">fun</span> <span class="title">getOrThrow</span><span class="params">()</span></span>: Any? = ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>SafeContinuation伴生类里有一个状态机RESULT，负责对SafeContinuation实例的 result 成员进行原子更新，<br>比如调用 RESULT.compareAndSet(safe, UNDECIDED, result.value) 代表 safe 的 result 被从 UNDECIDED 更新成了 result.value。</p>
+<p>如果你在 block 执行完毕之前就调用了 safe.resumeWith，<br>那 SafeContinuation 内部的调用顺序就是 resumeWith -&gt; getOrThrow。</p>
+<p>如果你在执行block时把safe实例保存了下来，在block执行完毕后再调用safe.resumeWith，<br>那SafeContinuation 内部的调用顺序就是 getOrThrow -&gt; resumeWith。</p>
+<p>这两种方式就决定了函数是否真正的挂起：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">actual</span> <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">resumeWith</span><span class="params">(result: <span class="type">Result</span>&lt;<span class="type">T</span>&gt;)</span></span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="keyword">val</span> cur = <span class="keyword">this</span>.result</span><br><span class="line">        <span class="keyword">when</span> &#123;</span><br><span class="line">            cur === UNDECIDED -&gt; <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, UNDECIDED, result.value)) <span class="keyword">return</span></span><br><span class="line">            cur === COROUTINE_SUSPENDED -&gt; <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, COROUTINE_SUSPENDED, RESUMED)) &#123;</span><br><span class="line">                delegate.resumeWith(result)</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> -&gt; <span class="keyword">throw</span> IllegalStateException(<span class="string">&quot;Already resumed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">actual</span> <span class="function"><span class="keyword">fun</span> <span class="title">getOrThrow</span><span class="params">()</span></span>: Any? &#123;</span><br><span class="line">    <span class="keyword">var</span> result = <span class="keyword">this</span>.result</span><br><span class="line">    <span class="keyword">if</span> (result === UNDECIDED) &#123;</span><br><span class="line">        <span class="keyword">if</span> (RESULT.compareAndSet(<span class="keyword">this</span>, UNDECIDED, COROUTINE_SUSPENDED)) <span class="keyword">return</span> COROUTINE_SUSPENDED</span><br><span class="line">        result = <span class="keyword">this</span>.result</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">when</span> &#123;</span><br><span class="line">        result === RESUMED -&gt; COROUTINE_SUSPENDED</span><br><span class="line">        result <span class="keyword">is</span> Result.Failure -&gt; <span class="keyword">throw</span> result.exception</span><br><span class="line">        <span class="keyword">else</span> -&gt; result</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>提醒！suspendCoroutine 内部创建的 SafeContinuation 的 result 初始值是 <em>UNDECIDED</em>。</p>
+<ol>
+<li><p>先调用 resumeWith：</p>
+<p>result 会先从 UNDECIDED 变成具体的值，因此等到 getOrThrow 调用时，就直接返回出去了，就和调用普通函数一样。</p>
+</li>
+<li><p>后调用 resumeWith:</p>
+<p>result 初始值 UNDECIDED，getOrThrow 调用时，result 会被更新为 COROUTINE_SUSPENDED，并且返回 COROUTINE_SUSPENDED 给外部。</p>
+</li>
+</ol>
+<p>总结，getOrThrow 可能返回 COROUTINE_SUSPENDED 或者 result: Any?（可能仍然是 COROUTINE_SUSPENDED），而外部还有一层<br>suspendCoroutineUninterceptedOrReturn ，我们到看一下他的实现：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">suspend</span> <span class="keyword">inline</span> <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">suspendCoroutineUninterceptedOrReturn</span><span class="params">(<span class="keyword">crossinline</span> block: (<span class="type">Continuation</span>&lt;<span class="type">T</span>&gt;) -&gt; <span class="type">Any</span>?)</span></span>: T &#123;</span><br><span class="line">    contract &#123; callsInPlace(block, InvocationKind.EXACTLY_ONCE) &#125;</span><br><span class="line">    <span class="keyword">throw</span> NotImplementedError(<span class="string">&quot;Implementation of suspendCoroutineUninterceptedOrReturn is intrinsic&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>intrinsic 意味着 他的实现是在是内置于 compiler 的，不过我们阅读他的注释可以知道，他用于获取在挂起函数内部的当前<br>Continuation 实例，可以选择挂起当前运行的协程，或立即返回结果而不进行挂起：</p>
+<ol>
+<li>如果代码块返回特殊的 COROUTINE_SUSPENDED 值，这意味着挂起函数已挂起执行，不会立即返回任何结果。在这种情况下，<strong>提供给代码块的<br>Continuation （上文的 c.intercepted(): Continuation）将在将来的某个时刻通过调用 resumeWith 来恢复以便继续计算</strong>。</li>
+<li>否则，代码块的返回值必须具有可分配给 T 类型的类型，并表示此挂起函数的结果。这意味着执行未被挂起，并且提供给代码块的<br>Continuation 将不会被调用。</li>
+</ol>
+<p>所以，挂起本质上是 getOrThrow 返回 COROUTINE_SUSPENDED 进而 suspendCoroutineUninterceptedOrReturn 阻塞了执行。</p>
+<p>而恢复的本质是 resumeWith 的调用，result会被从COROUTINE_SUSPENDED更新为RESUMED，并且suspendCoroutineUninterceptedOrReturn的参数<br>c 的 c.intercepted() : Continuation 会被调用 resumeWith。</p>
+<p>而一个未挂起过直接返回确切值的SafeContinuation，我们认为他“并未真正挂起”。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2023/10/08/7_suspend_coroutine/" data-id="clnhix49t0009myou42ib8j9q" data-title="Kotlin Coroutine 挂起本质" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2023/10/08/6_flows_1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">StateFlow, SharedFlow 和 ChannelFlow</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+          </li>
+        
+          <li>
+            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+          </li>
+        
+          <li>
+            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2023 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
