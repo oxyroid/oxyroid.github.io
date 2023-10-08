@@ -3,12 +3,12 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle: ''
-description: ''
+title: Blog
+subtitle: '𝘉𝘦𝘭𝘪𝘦𝘷𝘦 𝘺𝘰𝘶 𝘤𝘢𝘯 𝘢𝘯𝘥 𝘺𝘰𝘶'𝘳𝘦 𝘩𝘢𝘭𝘧𝘸𝘢𝘺 𝘵𝘩𝘦𝘳𝘦.'
+description: 'realOxy's Blog'
 keywords:
-author: John Doe
-language: en
+author: oxy
+language: zh
 timezone: ''
 
 # URL
