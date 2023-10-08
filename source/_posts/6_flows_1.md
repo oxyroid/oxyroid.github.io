@@ -1,4 +1,8 @@
-## StateFlow, SharedFlow 和 ChannelFlow
+---
+title: StateFlow, SharedFlow 和 ChannelFlow
+date: 2023-10-08 16:22:01
+tags: [kotlin, flow]
+---
 
 1. 构造方式
     - StateFlow：

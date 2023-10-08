@@ -1,4 +1,8 @@
-# Kotlin Lambda
+---
+title: Kotlin Lambda
+date: 2023-01-13 21:29:13
+tags: [kotlin, lambda]
+---
 
 介绍Kotlin的特性时，往往喜欢拿Java来做对比  ~~（Java：老了被嫌弃了~~
 

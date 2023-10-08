@@ -1,4 +1,8 @@
-## Kotlin Coroutine 挂起本质
+---
+title: Kotlin Coroutine 挂起本质
+date: 2023-10-08 16:22:02
+tags: [kotlin, coroutine]
+---
 
 suspendCoroutine { con -> … } 会先生成一个SafeContinuation对象，然后将其传入block，即 “{ con -> … } ”。
 

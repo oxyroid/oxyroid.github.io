@@ -1,4 +1,8 @@
-## Compose 新手容易忽视的点（一）
+---
+title: Compose 新手容易忽视的点（一）
+date: 2023-07-18 23:49:02
+tags: [kotlin, compose]
+---
 
 1. 使用 `remember` 避免在重组时反复获取对象：
 
