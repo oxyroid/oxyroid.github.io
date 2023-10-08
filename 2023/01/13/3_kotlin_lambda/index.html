@@ -4,26 +4,26 @@
   <meta charset="utf-8">
   
   
-  <title>Kotlin Lambda | Hexo</title>
+  <title>Kotlin Lambda | Oxy Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="介绍Kotlin的特性时，往往喜欢拿Java来做对比  （Java：老了被嫌弃了 在Java中，似乎只有引用类型的实例才称得上对象，基础类型和函数都最多只能算“二等公民”。设计基础类型有一定的好处，即基本类型不需要实例化便可以使用，相比于与之对应的包装类型更加节省内存。不过，Kotlin去除了基本类型这一设计。函数不算做对象只能说是Java的设计缺陷，想要实现其他语言类似的效果，可以通过SAM间接">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kotlin Lambda">
-<meta property="og:url" content="http://example.com/2023/01/13/3_kotlin_lambda/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:url" content="https://github.com/realOxy/2023/01/13/3_kotlin_lambda/index.html">
+<meta property="og:site_name" content="Oxy Blog">
 <meta property="og:description" content="介绍Kotlin的特性时，往往喜欢拿Java来做对比  （Java：老了被嫌弃了 在Java中，似乎只有引用类型的实例才称得上对象，基础类型和函数都最多只能算“二等公民”。设计基础类型有一定的好处，即基本类型不需要实例化便可以使用，相比于与之对应的包装类型更加节省内存。不过，Kotlin去除了基本类型这一设计。函数不算做对象只能说是Java的设计缺陷，想要实现其他语言类似的效果，可以通过SAM间接">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale">
 <meta property="article:published_time" content="2023-01-13T21:29:13.000Z">
-<meta property="article:modified_time" content="2023-10-08T14:56:06.064Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:modified_time" content="2023-10-08T14:58:57.927Z">
+<meta property="article:author" content="Oxy">
 <meta property="article:tag" content="kotlin">
 <meta property="article:tag" content="lambda">
 <meta name="twitter:card" content="summary">
   
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/realOxy/atom.xml" title="Oxy Blog" type="application/atom+xml">
   
   
-    <link rel="shortcut icon" href="/favicon.png">
+    <link rel="shortcut icon" href="/realOxy/favicon.png">
   
   
     
@@ -31,11 +31,11 @@
 
   
   
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/realOxy/css/style.css">
 
   
     
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+<link rel="stylesheet" href="/realOxy/fancybox/jquery.fancybox.min.css">
 
   
   
@@ -49,7 +49,7 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
+        <a href="/realOxy/" id="logo">Oxy Blog</a>
       </h1>
       
     </div>
@@ -57,20 +57,20 @@
       <nav id="main-nav">
         <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
         
-          <a class="main-nav-link" href="/">Home</a>
+          <a class="main-nav-link" href="/realOxy/">Home</a>
         
-          <a class="main-nav-link" href="/archives">Archives</a>
+          <a class="main-nav-link" href="/realOxy/archives">Archives</a>
         
       </nav>
       <nav id="sub-nav">
         
         
-          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+          <a class="nav-icon" href="/realOxy/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
         
-        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+        <a class="nav-icon nav-search-btn" title="Suche"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Suche"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://github.com/realOxy"></form>
       </div>
     </div>
   </div>
@@ -79,7 +79,7 @@
       <div class="outer">
         <section id="main"><article id="post-3_kotlin_lambda" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2023/01/13/3_kotlin_lambda/" class="article-date">
+    <a href="/realOxy/2023/01/13/3_kotlin_lambda/" class="article-date">
   <time class="dt-published" datetime="2023-01-13T21:29:13.000Z" itemprop="datePublished">2023-01-13</time>
 </a>
     
@@ -145,11 +145,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2023/01/13/3_kotlin_lambda/" data-id="clnhl75yv0003mtowdkw8hqn7" data-title="Kotlin Lambda" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://github.com/realOxy/2023/01/13/3_kotlin_lambda/" data-id="clnhlatvr0003koq9cu3p6itj" data-title="Kotlin Lambda" class="article-share-link"><span class="fa fa-share">Teilen</span></a>
       
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/realOxy/tags/kotlin/" rel="tag">kotlin</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/realOxy/tags/lambda/" rel="tag">lambda</a></li></ul>
 
     </footer>
   </div>
@@ -157,8 +157,8 @@
     
 <nav id="article-nav">
   
-    <a href="/2023/05/11/4_delegate/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
+    <a href="/realOxy/2023/05/11/4_delegate/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
       <div class="article-nav-title">
         
           在实际开发中学习设计模式（一）
@@ -167,8 +167,8 @@
     </a>
   
   
-    <a href="/2023/01/13/2_reactive_programming/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
+    <a href="/realOxy/2023/01/13/2_reactive_programming/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
       <div class="article-nav-title">初探 Reactive Programming</div>
     </a>
   
@@ -189,7 +189,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/livedata/" rel="tag">livedata</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/realOxy/tags/livedata/" rel="tag">livedata</a></li></ul>
     </div>
   </div>
 
@@ -199,16 +199,16 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/android/" style="font-size: 10px;">android</a> <a href="/tags/compose/" style="font-size: 10px;">compose</a> <a href="/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/tags/flow/" style="font-size: 15px;">flow</a> <a href="/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/tags/livedata/" style="font-size: 10px;">livedata</a>
+      <a href="/realOxy/tags/android/" style="font-size: 10px;">android</a> <a href="/realOxy/tags/compose/" style="font-size: 10px;">compose</a> <a href="/realOxy/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/realOxy/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/realOxy/tags/flow/" style="font-size: 15px;">flow</a> <a href="/realOxy/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/realOxy/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/realOxy/tags/livedata/" style="font-size: 10px;">livedata</a>
     </div>
   </div>
 
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/01/">January 2023</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/realOxy/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/realOxy/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/realOxy/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/realOxy/archives/2023/01/">January 2023</a></li></ul>
     </div>
   </div>
 
@@ -216,28 +216,28 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
+            <a href="/realOxy/2023/10/08/7_suspend_coroutine/">Kotlin Coroutine 挂起本质</a>
           </li>
         
           <li>
-            <a href="/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
+            <a href="/realOxy/2023/10/08/6_flows_1/">StateFlow, SharedFlow 和 ChannelFlow</a>
           </li>
         
           <li>
-            <a href="/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
+            <a href="/realOxy/2023/07/18/5_compose_note_1/">Compose 新手容易忽视的点（一）</a>
           </li>
         
           <li>
-            <a href="/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
+            <a href="/realOxy/2023/05/11/4_delegate/">在实际开发中学习设计模式（一）</a>
           </li>
         
           <li>
-            <a href="/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
+            <a href="/realOxy/2023/01/13/3_kotlin_lambda/">Kotlin Lambda</a>
           </li>
         
       </ul>
@@ -253,7 +253,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       
-      &copy; 2023 John Doe<br>
+      &copy; 2023 Oxy<br>
       Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
@@ -262,25 +262,25 @@
     </div>
     <nav id="mobile-nav">
   
-    <a href="/" class="mobile-nav-link">Home</a>
+    <a href="/realOxy/" class="mobile-nav-link">Home</a>
   
-    <a href="/archives" class="mobile-nav-link">Archives</a>
+    <a href="/realOxy/archives" class="mobile-nav-link">Archives</a>
   
 </nav>
     
 
 
-<script src="/js/jquery-3.6.4.min.js"></script>
+<script src="/realOxy/js/jquery-3.6.4.min.js"></script>
 
 
 
   
-<script src="/fancybox/jquery.fancybox.min.js"></script>
+<script src="/realOxy/fancybox/jquery.fancybox.min.js"></script>
 
 
 
 
-<script src="/js/script.js"></script>
+<script src="/realOxy/js/script.js"></script>
 
 
 
