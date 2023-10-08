@@ -4,23 +4,23 @@
   <meta charset="utf-8">
   
   
-  <title>在实际开发中学习设计模式（一） | Hexo</title>
+  <title>在实际开发中学习设计模式（一） | Blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="前言今天在Code Review 项目时，遇到了一个需要翻转List的需求。 放在Java里，不借助第三方工具包的前提想要实现需求可能要反向遍历原列表，将元素一个个add到另外一个新的列表中。 12345List&lt;Object&gt; list &#x3D; getList();ArrayList&lt;Object&gt; reversedList &#x3D; new ArrayList&lt;&gt;()">
 <meta property="og:type" content="article">
 <meta property="og:title" content="在实际开发中学习设计模式（一）">
 <meta property="og:url" content="https://realoxy.github.io/repository/2023/05/11/4_delegate/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="Blog">
 <meta property="og:description" content="前言今天在Code Review 项目时，遇到了一个需要翻转List的需求。 放在Java里，不借助第三方工具包的前提想要实现需求可能要反向遍历原列表，将元素一个个add到另外一个新的列表中。 12345List&lt;Object&gt; list &#x3D; getList();ArrayList&lt;Object&gt; reversedList &#x3D; new ArrayList&lt;&gt;()">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale">
 <meta property="article:published_time" content="2023-05-11T09:04:25.000Z">
-<meta property="article:modified_time" content="2023-10-08T14:06:15.790Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:modified_time" content="2023-10-08T14:26:34.607Z">
+<meta property="article:author" content="oxy">
 <meta property="article:tag" content="kotlin">
 <meta property="article:tag" content="delegate">
 <meta name="twitter:card" content="summary">
   
-    <link rel="alternate" href="/repository/atom.xml" title="Hexo" type="application/atom+xml">
+    <link rel="alternate" href="/repository/atom.xml" title="Blog" type="application/atom+xml">
   
   
     <link rel="shortcut icon" href="/repository/favicon.png">
@@ -49,8 +49,12 @@
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/repository/" id="logo">Hexo</a>
+        <a href="/repository/" id="logo">Blog</a>
       </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/repository/" id="subtitle">Believe you can and you are halfway there.</a>
+        </h2>
       
     </div>
     <div id="header-inner" class="inner">
@@ -65,12 +69,12 @@
       <nav id="sub-nav">
         
         
-          <a class="nav-icon" href="/repository/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+          <a class="nav-icon" href="/repository/atom.xml" title="RSSフィード"><span class="fa fa-rss"></span></a>
         
-        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+        <a class="nav-icon nav-search-btn" title="検索"><span class="fa fa-search"></span></a>
       </nav>
       <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://realOxy.github.io/repository"></form>
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="検索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://realOxy.github.io/repository"></form>
       </div>
     </div>
   </div>
@@ -139,7 +143,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://realoxy.github.io/repository/2023/05/11/4_delegate/" data-id="clnhjf3by0004jfoph5af7xro" data-title="在实际开发中学习设计模式（一）" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      <a data-url="https://realoxy.github.io/repository/2023/05/11/4_delegate/" data-id="clnhk56740004ifoz6o90fho7" data-title="在实际开发中学习设计模式（一）" class="article-share-link"><span class="fa fa-share">共有</span></a>
       
       
       
@@ -152,7 +156,7 @@
 <nav id="article-nav">
   
     <a href="/repository/2023/07/18/5_compose_note_1/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
+      <strong class="article-nav-caption">次の記事</strong>
       <div class="article-nav-title">
         
           Compose 新手容易忽视的点（一）
@@ -162,7 +166,7 @@
   
   
     <a href="/repository/2023/01/13/3_kotlin_lambda/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
+      <strong class="article-nav-caption">前の記事</strong>
       <div class="article-nav-title">Kotlin Lambda</div>
     </a>
   
@@ -181,7 +185,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
+    <h3 class="widget-title">タグ</h3>
     <div class="widget">
       <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/android/" rel="tag">android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/compose/" rel="tag">compose</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/coroutine/" rel="tag">coroutine</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/delegate/" rel="tag">delegate</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/flow/" rel="tag">flow</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/kotlin/" rel="tag">kotlin</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/lambda/" rel="tag">lambda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/repository/tags/livedata/" rel="tag">livedata</a></li></ul>
     </div>
@@ -191,7 +195,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">タグクラウド</h3>
     <div class="widget tagcloud">
       <a href="/repository/tags/android/" style="font-size: 10px;">android</a> <a href="/repository/tags/compose/" style="font-size: 10px;">compose</a> <a href="/repository/tags/coroutine/" style="font-size: 10px;">coroutine</a> <a href="/repository/tags/delegate/" style="font-size: 10px;">delegate</a> <a href="/repository/tags/flow/" style="font-size: 15px;">flow</a> <a href="/repository/tags/kotlin/" style="font-size: 20px;">kotlin</a> <a href="/repository/tags/lambda/" style="font-size: 10px;">lambda</a> <a href="/repository/tags/livedata/" style="font-size: 10px;">livedata</a>
     </div>
@@ -200,7 +204,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">アーカイブ</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/10/">October 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/07/">July 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/05/">May 2023</a></li><li class="archive-list-item"><a class="archive-list-link" href="/repository/archives/2023/01/">January 2023</a></li></ul>
     </div>
@@ -210,7 +214,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">最近の投稿</h3>
     <div class="widget">
       <ul>
         
@@ -247,7 +251,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       
-      &copy; 2023 John Doe<br>
+      &copy; 2023 oxy<br>
       Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
