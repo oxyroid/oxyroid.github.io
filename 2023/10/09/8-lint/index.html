@@ -32,22 +32,9 @@ gtag('config', 'xx-xxxxxxx-xx');</script><link rel="stylesheet" href="/css/tocbo
 <h3 id="lint"><a href="#lint" class="headerlink" title="lint"></a>lint</h3><p>又叫 <code>lint check</code> 或者 <code>lint tool</code>， 他可以检测潜在错误，以及在正确性、安全性、性能、易用性、便利性和国际化方面是否需要优化改进， 帮助我们发现代码质量问题，同时提供一些解决方案。每个问题都有信息描述和等级。</p>
 <p>同样的检查工具还有 <code>CheckStyle</code>, <code>Ktlint</code>, <code>Detekt</code> 等。<code>CheckStyle</code> 只支持 <code>Java</code> 因此我们不讨论，后两者为现在主流的 <code>kotlin</code> 代码检查器，我们以后会讨论。</p>
 <h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p>本文我将实现：不允许 star-import，以及不允许调用 WindowInsetsCompat 的某个函数。</p>
-<h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><ol>
-<li>新建一个java module，用于存放 lint 规则</li>
-<li>配置 build.gradle.kts</li>
-</ol>
-<figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin">plugins &#123;<br>    `java-library`<br>    id(<span class="hljs-string">&quot;kotlin&quot;</span>)<br>    id(<span class="hljs-string">&quot;com.android.lint&quot;</span>)<br>&#125;<br>dependencies &#123;<br>    compileOnly(<span class="hljs-string">&quot;org.jetbrains.kotlin:kotlin-stdlib-jdk8&quot;</span>)<br>    compileOnly(<span class="hljs-string">&quot;com.android.tools.lint:lint-api:&lt;lint_version&gt;&quot;</span>)<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>新建一个 IssueRegistry，用于注册 lint</li>
-</ol>
-<figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin"><span class="hljs-comment">// 一个 lint module 只存在一个 IssueRegistry</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomIssueRegistry</span> : <span class="hljs-type">IssueRegistry</span>() &#123;<br>    <span class="hljs-comment">// 这里可以指定多个不同的检查</span><br>    <span class="hljs-keyword">override</span> <span class="hljs-keyword">val</span> issues: List&lt;Issue&gt; = TODO()<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<ol start="4">
-<li>与 IssueRegistry 注册表关联</li>
-</ol>
-<figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin"><span class="hljs-comment">// 新建注册表</span><br><span class="hljs-comment">// resources/META-INF/services/com.android.tools.lint.client.api.IssueRegistry</span><br><span class="hljs-comment">// 只能指定一个 IssueRegistry</span><br>com.`&lt;<span class="hljs-keyword">package</span>&gt;`.CustomIssueRegistry<br></code></pre></td></tr></table></figure>
-
+<h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><h4 id="新建一个java-module，用于存放-lint-规则"><a href="#新建一个java-module，用于存放-lint-规则" class="headerlink" title="新建一个java module，用于存放 lint 规则"></a>新建一个java module，用于存放 lint 规则</h4><h4 id="配置-build-gradle-kts"><a href="#配置-build-gradle-kts" class="headerlink" title="配置 build.gradle.kts"></a>配置 build.gradle.kts</h4><figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin">plugins &#123;<br>    `java-library`<br>    id(<span class="hljs-string">&quot;kotlin&quot;</span>)<br>    id(<span class="hljs-string">&quot;com.android.lint&quot;</span>)<br>&#125;<br>dependencies &#123;<br>    compileOnly(<span class="hljs-string">&quot;org.jetbrains.kotlin:kotlin-stdlib-jdk8&quot;</span>)<br>    compileOnly(<span class="hljs-string">&quot;com.android.tools.lint:lint-api:&lt;lint_version&gt;&quot;</span>)<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="新建一个-IssueRegistry，用于注册-lint"><a href="#新建一个-IssueRegistry，用于注册-lint" class="headerlink" title="新建一个 IssueRegistry，用于注册 lint"></a>新建一个 IssueRegistry，用于注册 lint</h4><figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin"><span class="hljs-comment">// 一个 lint module 只存在一个 IssueRegistry</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomIssueRegistry</span> : <span class="hljs-type">IssueRegistry</span>() &#123;<br>    <span class="hljs-comment">// 这里可以指定多个不同的检查</span><br>    <span class="hljs-keyword">override</span> <span class="hljs-keyword">val</span> issues: List&lt;Issue&gt; = TODO()<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="与-IssueRegistry-注册表关联"><a href="#与-IssueRegistry-注册表关联" class="headerlink" title="与 IssueRegistry 注册表关联"></a>与 IssueRegistry 注册表关联</h4><figure class="highlight kotlin"><table><tr><td class="code"><pre><code class="hljs kotlin"><span class="hljs-comment">// 新建注册表</span><br><span class="hljs-comment">// resources/META-INF/services/com.android.tools.lint.client.api.IssueRegistry</span><br><span class="hljs-comment">// 只能指定一个 IssueRegistry</span><br>com.`&lt;<span class="hljs-keyword">package</span>&gt;`.CustomIssueRegistry<br></code></pre></td></tr></table></figure>
 <h3 id="开始实现"><a href="#开始实现" class="headerlink" title="开始实现"></a>开始实现</h3><h4 id="NonStarImportsDetector-不允许-star-import"><a href="#NonStarImportsDetector-不允许-star-import" class="headerlink" title="NonStarImportsDetector: 不允许 star-import"></a>NonStarImportsDetector: 不允许 star-import</h4><p>先了解以下概念：</p>
 <ul>
 <li>Issue: 问题，直观上讲就是呈现给用户（编码者）的警告&#x2F;报错&#x2F;日志，可以指定优先级或者附带快速修复等。</li>
