@@ -19,10 +19,8 @@ tags: [ kotlin, lint, tool ]
 本文我将实现：不允许 star-import，以及不允许调用 WindowInsetsCompat 的某个函数。
 
 ### 准备
-
-1. 新建一个java module，用于存放 lint 规则
-2. 配置 build.gradle.kts
-
+#### 新建一个java module，用于存放 lint 规则
+#### 配置 build.gradle.kts
 ```kotlin
 plugins {
     `java-library`
@@ -34,9 +32,7 @@ dependencies {
     compileOnly("com.android.tools.lint:lint-api:<lint_version>")
 }
 ```
-
-3. 新建一个 IssueRegistry，用于注册 lint
-
+#### 新建一个 IssueRegistry，用于注册 lint
 ```kotlin
 // 一个 lint module 只存在一个 IssueRegistry
 class CustomIssueRegistry : IssueRegistry() {
@@ -44,16 +40,13 @@ class CustomIssueRegistry : IssueRegistry() {
     override val issues: List<Issue> = TODO()
 }
 ```
-
-4. 与 IssueRegistry 注册表关联
-
+#### 与 IssueRegistry 注册表关联
 ```kotlin
 // 新建注册表
 // resources/META-INF/services/com.android.tools.lint.client.api.IssueRegistry
 // 只能指定一个 IssueRegistry
 com.`<package>`.CustomIssueRegistry
 ```
-
 ### 开始实现
 
 #### NonStarImportsDetector: 不允许 star-import
