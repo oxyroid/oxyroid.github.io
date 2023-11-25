@@ -8,16 +8,16 @@ The `rememberSaveable` API functions similarly to `remember`, as explained in th
 
 > The `rememberSaveable` API retains state across recompositions and even persists through activity or process recreation using the saved instance state mechanism.
 
-## Question: In which situations is it more appropriate to use `remember {}` instead of `rememberSaveable {}` + `Saver`?
+## In which situations is it more appropriate to use `remember {}` instead of `rememberSaveable {}` + `Saver`?
 
-**Answer:** `RememberSaveable` restricts you to what is possible in the `Bundle`. If your data fits within these constraints, `rememberSaveable` is suitable. However, `remember {}` allows more flexibility.
+`RememberSaveable` restricts you to what is possible in the `Bundle`. If your data fits within these constraints, `rememberSaveable` is suitable. However, `remember {}` allows more flexibility.
 
-## Question: Compose allows customizing savers, enabling the conversion of any objects to a bundle (for Android platform). It means `rememberSaveable` with customizing savers is better forever than `remember`?
+## Compose allows customizing savers, enabling the conversion of any objects to a bundle (for Android platform). It means `rememberSaveable` with customizing savers is better forever than `remember`?
 
-**Answer:** No, dealing with large objects that may be challenging.
+No, dealing with large objects that may be challenging.
 
-## Question: Are there specific scenarios where `remember` is better than `rememberSaveable`?
+## Are there specific scenarios where `remember` is better than `rememberSaveable`?
 
-**Answer:** Yes, required in certain composables, is consistently driven by external data. In such cases, a saver might be unnecessary. Conversely, states reset due to screen rotation may necessitate a saver, such as for an integer tracking button clicks, which shouldn’t be saved to the ViewModel.
+Yes, required in certain composables, is consistently driven by external data. In such cases, a saver might be unnecessary. Conversely, states reset due to screen rotation may necessitate a saver, such as for an integer tracking button clicks, which shouldn’t be saved to the ViewModel.
 
 By carefully considering these factors, you can choose between `remember` and `rememberSaveable` effectively based on your specific use case and requirements.
